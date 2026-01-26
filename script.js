@@ -1531,6 +1531,9 @@ document.addEventListener('mouseup', () => {
 
 // Touch support for mobile devices
 document.addEventListener('touchstart', (e) => {
+    // Prevent default to avoid scrolling and improve responsiveness
+    e.preventDefault();
+    
     isDragging = true;
     
     // Get the first touch point
@@ -1538,35 +1541,36 @@ document.addEventListener('touchstart', (e) => {
     mouseX = touch.clientX;
     mouseY = touch.clientY;
     
-    // Prevent default to avoid scrolling
+    // Update game state if game is started
     if (gameStarted) {
-        e.preventDefault();
+        updateBackground();
+        checkTargetReveal();
+        checkHazardCollision();
     }
 }, { passive: false });
 
 document.addEventListener('touchmove', (e) => {
+    // Always prevent default to ensure smooth dragging
+    e.preventDefault();
+    
     // Get the first touch point
     const touch = e.touches[0];
     mouseX = touch.clientX;
     mouseY = touch.clientY;
     
-    if (!gameStarted) return;
-    
-    // Prevent default to avoid scrolling during gameplay
-    e.preventDefault();
-    
-    updateBackground();
-    checkTargetReveal();
-    checkHazardCollision();
+    // Update game state if game is started
+    if (gameStarted) {
+        updateBackground();
+        checkTargetReveal();
+        checkHazardCollision();
+    }
 }, { passive: false });
 
 document.addEventListener('touchend', (e) => {
-    isDragging = false;
-    
     // Prevent default
-    if (gameStarted) {
-        e.preventDefault();
-    }
+    e.preventDefault();
+    
+    isDragging = false;
 }, { passive: false });
 
 // Function to update background gradient based on theme
