@@ -1524,9 +1524,6 @@ document.addEventListener('mousemove', (e) => {
     mouseX = e.clientX;
     mouseY = e.clientY;
     
-    // Always update custom cursor position
-    updateCustomCursor(mouseX, mouseY);
-    
     if (!gameStarted) return;
     updateBackground();
     checkTargetReveal();
@@ -1541,6 +1538,46 @@ document.addEventListener('mousedown', () => {
 document.addEventListener('mouseup', () => {
     isDragging = false;
 });
+
+// Touch support for mobile devices
+document.addEventListener('touchstart', (e) => {
+    isDragging = true;
+    
+    // Get the first touch point
+    const touch = e.touches[0];
+    mouseX = touch.clientX;
+    mouseY = touch.clientY;
+    
+    // Prevent default to avoid scrolling
+    if (gameStarted) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+document.addEventListener('touchmove', (e) => {
+    // Get the first touch point
+    const touch = e.touches[0];
+    mouseX = touch.clientX;
+    mouseY = touch.clientY;
+    
+    if (!gameStarted) return;
+    
+    // Prevent default to avoid scrolling during gameplay
+    e.preventDefault();
+    
+    updateBackground();
+    checkTargetReveal();
+    checkHazardCollision();
+}, { passive: false });
+
+document.addEventListener('touchend', (e) => {
+    isDragging = false;
+    
+    // Prevent default
+    if (gameStarted) {
+        e.preventDefault();
+    }
+}, { passive: false });
 
 // Function to update background gradient based on theme
 function updateStartScreenBackground(theme) {

@@ -13,6 +13,10 @@ body {
     justify-content: center;
     align-items: center;
     transition: background 0.5s ease;
+    touch-action: none; /* Prevent default touch gestures */
+    -webkit-touch-callout: none; /* Prevent callout on iOS */
+    -webkit-user-select: none; /* Prevent text selection on touch */
+    user-select: none;
 }
 
 body.game-started {
@@ -113,6 +117,8 @@ body.game-started:not(.performance-mode)::after {
     background-position: center;
     will-change: transform;
     opacity: 0;
+    transition: opacity 0.2s ease;
+    display: none; /* Hide cursor completely */
 }
 
 #start-screen {
@@ -162,7 +168,9 @@ body.game-started:not(.performance-mode)::after {
     box-shadow: none;
     transition: letter-spacing 0.2s ease, opacity 0.2s ease, text-shadow 0.2s ease, filter 0.2s ease;
     margin-top: 22px;
-    padding: 0;
+    padding: 10px 20px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 #start-button:hover {
@@ -205,6 +213,9 @@ body.game-started #classic-shapes-layer {
     font-size: 28px;
     letter-spacing: 1px;
     transition: letter-spacing 0.2s ease, opacity 0.2s ease, text-shadow 0.2s ease, filter 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    padding: 10px;
 }
 
 @media (max-width: 900px) {
@@ -266,6 +277,40 @@ body.game-started #classic-shapes-layer {
     .landing-link {
         font-size: 18px;
     }
+
+    /* Adjust game UI for small screens */
+    #level-indicator {
+        font-size: 20px;
+        padding: 10px 15px;
+        top: 10px;
+        left: 10px;
+    }
+
+    #game-legend {
+        top: 10px;
+        right: 10px;
+        gap: 10px;
+    }
+
+    .legend-item {
+        padding: 8px 12px;
+    }
+
+    .legend-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .legend-count {
+        font-size: 20px;
+        min-width: 25px;
+    }
+
+    /* Make custom cursor slightly smaller on mobile */
+    #custom-cursor {
+        width: 28px;
+        height: 28px;
+    }
 }
 
 .landing-link:hover {
@@ -286,6 +331,9 @@ body.game-started #classic-shapes-layer {
     letter-spacing: 1px;
     font-family: 'Jacquard 12', 'Arial', sans-serif;
     transition: letter-spacing 0.2s ease, opacity 0.2s ease, text-shadow 0.2s ease, filter 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    padding: 10px;
 }
 
 .back-link:hover {
@@ -348,6 +396,8 @@ body.game-started #classic-shapes-layer {
     backdrop-filter: blur(10px);
     position: relative;
     overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .theme-button::before,
@@ -611,6 +661,8 @@ body.game-started #classic-shapes-layer {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     margin-top: 10px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 #restart-button:hover {
@@ -662,6 +714,8 @@ body.game-started #classic-shapes-layer {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     margin-top: 10px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 #next-level-button:hover {
@@ -775,6 +829,8 @@ body.game-started #classic-shapes-layer {
     font-weight: bold;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 #save-score-button:hover {
@@ -793,6 +849,8 @@ body.game-started #classic-shapes-layer {
     font-weight: bold;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 #finish-run-button:hover {
@@ -880,6 +938,8 @@ body.game-started #classic-shapes-layer {
     padding: 10px 16px;
     font-weight: bold;
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .score-cancel {
@@ -974,11 +1034,13 @@ body.game-started #classic-shapes-layer {
     background: none;
     color: #66C2FF;
     border: none;
-    padding: 0;
+    padding: 10px 20px;
     text-decoration: none;
     font-weight: bold;
     box-shadow: none;
     transition: letter-spacing 0.2s ease, opacity 0.2s ease, text-shadow 0.2s ease, filter 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .play-again-button:hover {
