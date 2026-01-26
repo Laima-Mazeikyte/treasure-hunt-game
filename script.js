@@ -668,7 +668,6 @@ function updateLegendLabels(themeId) {
 
 function applyThemeAssetsToUi(level, themeId) {
     const config = getLevelConfig(level, themeId);
-    applyAssetToElement(document.getElementById('custom-cursor'), config.assets.cursor);
     applyAssetToElement(document.getElementById('target-legend-icon'), config.assets.target);
     applyAssetToElement(document.getElementById('hazard-legend-icon'), config.assets.hazard);
     applyAssetToElement(document.getElementById('target-indicator-icon'), config.assets.target);
@@ -1507,15 +1506,6 @@ function updateLevelDisplay() {
     const levelDisplay = document.getElementById('level-display');
     if (levelDisplay) {
         levelDisplay.textContent = `Level ${currentLevel}`;
-    }
-}
-
-// Update custom cursor position
-function updateCustomCursor(x, y) {
-    const customCursor = document.getElementById('custom-cursor');
-    if (customCursor) {
-        customCursor.style.left = `${x}px`;
-        customCursor.style.top = `${y}px`;
     }
 }
 

@@ -103,24 +103,6 @@ body.game-started:not(.performance-mode)::after {
     }
 }
 
-/* Custom themed cursor */
-#custom-cursor {
-    position: fixed;
-    pointer-events: none;
-    z-index: 10000;
-    width: 32px;
-    height: 32px;
-    transform: translate(-50%, -50%);
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    will-change: transform;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    display: none; /* Hide cursor completely */
-}
-
 #start-screen {
     position: fixed;
     top: 50%;
@@ -304,12 +286,6 @@ body.game-started #classic-shapes-layer {
     .legend-count {
         font-size: 20px;
         min-width: 25px;
-    }
-
-    /* Make custom cursor slightly smaller on mobile */
-    #custom-cursor {
-        width: 28px;
-        height: 28px;
     }
 }
 
