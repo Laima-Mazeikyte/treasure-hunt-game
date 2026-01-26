@@ -1,0 +1,40 @@
+<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer eye shape with subtle pulse -->
+  <path d="M12 15C15.866 15 19 11.866 19 8C19 4.13401 15.866 1 12 1C8.13401 1 5 4.13401 5 8C5 11.866 8.13401 15 12 15Z" 
+        stroke="white" 
+        stroke-width="2" 
+        stroke-linecap="round" 
+        stroke-linejoin="round">
+    <animate attributeName="stroke-width" 
+             values="2;2.5;2" 
+             dur="2s" 
+             repeatCount="indefinite"/>
+  </path>
+  
+  <!-- Inner pupil with blink animation -->
+  <circle cx="12" cy="7.5" r="3" fill="white">
+    <animate attributeName="r" 
+             values="3;0.5;3;3;3" 
+             dur="4s" 
+             repeatCount="indefinite"
+             keyTimes="0;0.05;0.1;0.9;1"/>
+    <animate attributeName="cy" 
+             values="7.5;8;7.5;7.5;7.5" 
+             dur="4s" 
+             repeatCount="indefinite"
+             keyTimes="0;0.05;0.1;0.9;1"/>
+  </circle>
+  
+  <!-- Bottom tail with gentle sway -->
+  <path d="M8.21 13.8899L7 22.9999L12 19.9999L17 22.9999L15.79 13.8799" 
+        stroke="white" 
+        stroke-width="2" 
+        stroke-linecap="round" 
+        stroke-linejoin="round">
+    <animateTransform attributeName="transform"
+                      type="rotate"
+                      values="0 12 14;-5 12 14;0 12 14;5 12 14;0 12 14"
+                      dur="3s"
+                      repeatCount="indefinite"/>
+  </path>
+</svg>
