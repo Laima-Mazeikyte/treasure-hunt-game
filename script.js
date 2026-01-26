@@ -27,6 +27,8 @@ const lastRandomizedAssetsByTheme = new Map(); // Prevent immediate repeats per 
 let totalTargetsCollected = 0;
 let levelsCompleted = 0;
 let scoreSubmitted = false;
+let isTouchDevice = false;
+let customCursorElement = null;
 
 function updatePerformanceModeState() {
     document.body.classList.toggle('performance-mode', usePerformanceMode && gameStarted);
@@ -1142,6 +1144,19 @@ function updateCursorIndicators(targetDistance, hazardDistance) {
     hazardFill.style.width = `${hazardPercent}%`;
 }
 
+// Update custom cursor position
+function updateCustomCursor() {
+    if (!customCursorElement || !isTouchDevice) return;
+    
+    customCursorElement.style.left = `${mouseX}px`;
+    customCursorElement.style.top = `${mouseY}px`;
+}
+
+// Initialize custom cursor (simple circle, no asset needed)
+function initCustomCursor() {
+    customCursorElement = document.getElementById('custom-cursor');
+}
+
 function typeTitleText() {
     const titleEl = document.getElementById('start-title');
     if (!titleEl) return;
@@ -1482,6 +1497,9 @@ function startLevel() {
     updateTargetCounter();
     updateLegendIcons();
     applyThemeAssetsToUi(currentLevel, currentTheme);
+    
+    // Initialize custom cursor for touch devices
+    initCustomCursor();
 }
 
 // Start game with selected level
@@ -1514,6 +1532,9 @@ document.addEventListener('mousemove', (e) => {
     mouseX = e.clientX;
     mouseY = e.clientY;
     
+    // Update custom cursor position (for consistency)
+    updateCustomCursor();
+    
     if (!gameStarted) return;
     updateBackground();
     checkTargetReveal();
@@ -1534,12 +1555,21 @@ document.addEventListener('touchstart', (e) => {
     // Prevent default to avoid scrolling and improve responsiveness
     e.preventDefault();
     
+    // Mark as touch device and add class
+    if (!isTouchDevice) {
+        isTouchDevice = true;
+        document.body.classList.add('touch-device');
+    }
+    
     isDragging = true;
     
     // Get the first touch point
     const touch = e.touches[0];
     mouseX = touch.clientX;
     mouseY = touch.clientY;
+    
+    // Update custom cursor position
+    updateCustomCursor();
     
     // Update game state if game is started
     if (gameStarted) {
@@ -1553,10 +1583,19 @@ document.addEventListener('touchmove', (e) => {
     // Always prevent default to ensure smooth dragging
     e.preventDefault();
     
+    // Mark as touch device and add class
+    if (!isTouchDevice) {
+        isTouchDevice = true;
+        document.body.classList.add('touch-device');
+    }
+    
     // Get the first touch point
     const touch = e.touches[0];
     mouseX = touch.clientX;
     mouseY = touch.clientY;
+    
+    // Update custom cursor position
+    updateCustomCursor();
     
     // Update game state if game is started
     if (gameStarted) {

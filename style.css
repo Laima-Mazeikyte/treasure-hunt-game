@@ -23,6 +23,30 @@ body.game-started {
     cursor: none; /* Hide default cursor after game starts */
 }
 
+/* Custom cursor for touch devices */
+#custom-cursor {
+    position: fixed;
+    width: 6px;
+    height: 6px;
+    background-color: rgba(255, 248, 220, 0.9);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10000;
+    display: none;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 8px rgba(255, 248, 220, 0.6);
+    transition: opacity 0.2s ease;
+}
+
+body.game-started #custom-cursor {
+    display: block;
+    opacity: 0;
+}
+
+body.game-started.touch-device #custom-cursor {
+    opacity: 1;
+}
+
 body.performance-mode.game-started {
     transition: none;
 }
