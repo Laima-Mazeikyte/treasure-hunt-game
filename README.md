@@ -1,9 +1,9 @@
 # treasure-hunt-game
 
-A Snake game with leaderboard functionality built with vanilla JavaScript and InstantDB.
+A treasure hunt game with leaderboard functionality built with vanilla JavaScript and InstantDB.
 
 ## Features
-- Classic Snake gameplay
+- Hot and cold style gameplay
 - Online leaderboard
 - Custom theming and visual effects
 
