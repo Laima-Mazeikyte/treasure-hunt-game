@@ -18,6 +18,8 @@ let targets = [];
 let isDragging = false;
 let targetsFound = 0;
 let gameStarted = false;
+let gameReady = false; // Game is prepared but waiting for user to move
+let hasInteracted = false; // Track if user has started interacting
 let currentHoveredTarget = null; // Track which target is currently hovered
 let hazards = []; // Array of hazard enemies
 let currentLevel = 1; // Track current level
@@ -67,7 +69,7 @@ const themes = {
             legendHazardLabel: 'Hazards',
             gameOverTitle: 'Game Over!',
             gameOverMessage: 'You were caught by a hazard!',
-            levelCompleteTitle: 'Level {level} Complete!',
+            levelCompleteTitle: 'Level {level} complete!',
             levelCompleteMessage: 'All targets found!',
             nextLevelCta: 'Next Level',
             restartCta: 'Restart Game',
@@ -122,7 +124,7 @@ const themes = {
             legendHazardLabel: 'Hazards',
             gameOverTitle: 'Game Over!',
             gameOverMessage: 'You were caught by a hazard!',
-            levelCompleteTitle: 'Level {level} Complete!',
+            levelCompleteTitle: 'Level {level} complete!',
             levelCompleteMessage: 'All targets found!',
             nextLevelCta: 'Next Level',
             restartCta: 'Restart Game',
@@ -174,7 +176,7 @@ const themes = {
             legendHazardLabel: 'Hazards',
             gameOverTitle: 'Game Over!',
             gameOverMessage: 'You were caught by a hazard!',
-            levelCompleteTitle: 'Level {level} Complete!',
+            levelCompleteTitle: 'Level {level} complete!',
             levelCompleteMessage: 'All targets found!',
             nextLevelCta: 'Next Level',
             restartCta: 'Restart Game',
@@ -684,11 +686,11 @@ function getLevelConfig(level, themeId = currentTheme) {
     const mergedTargetOverride = { ...levelOverride.target, ...runtimeOverride.target };
 
     // Calculate progressive difficulty
-    // Hazards: starts at 1, increases by 1 every level (capped at 8 for reasonable difficulty)
-    const hazardsCount = Math.min(level, 8);
+    // Hazards: Level 1 has 0, Level 2+ starts at 1 and increases by 1 every level (capped at 8)
+    const hazardsCount = level === 1 ? 0 : Math.min(level - 1, 8);
 
-    // Targets: starts at 3, increases by 2 each level
-    const targetsCount = 3 + ((level - 1) * 2);
+    // Targets: Level 1 and 2 have 3, then increases by 2 each level
+    const targetsCount = level <= 2 ? 3 : 3 + ((level - 2) * 2);
 
     return {
         hazards: hazardsCount,
@@ -922,6 +924,25 @@ function updateHazardPositions() {
     });
 }
 
+// Check if cursor is near distorted area (for desktop interaction start)
+function isNearDistortedArea() {
+    if (!gameReady || !hasInteracted) {
+        // Check if mouse is near any dot
+        const theme = getThemeConfig(currentTheme);
+        const behavior = theme.dotBehavior || { pushRadius: 150 };
+        
+        for (let dot of dots) {
+            const dx = mouseX - dot.originalX;
+            const dy = mouseY - dot.originalY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < behavior.pushRadius) {
+                return true;
+            }
+        }
+    }
+    return hasInteracted;
+}
+
 // Update dot positions based on cursor
 function updateDots() {
     // Get current theme's dot behavior configuration
@@ -1113,6 +1134,12 @@ function updateHazardCounter() {
     const counterElement = document.getElementById('hazard-count');
     const config = getLevelConfig(currentLevel);
     counterElement.textContent = config.hazards;
+    
+    // Hide hazard legend item if no hazards
+    const hazardLegendItem = counterElement.closest('.legend-item');
+    if (hazardLegendItem) {
+        hazardLegendItem.style.display = config.hazards === 0 ? 'none' : 'flex';
+    }
 }
 
 // Update theme icons in legend and indicators
@@ -1196,6 +1223,35 @@ function typeTitleText() {
     } else {
         lockTitleSize();
         startTyping();
+    }
+}
+
+function typeInstructionText(text, callback) {
+    const instructionEl = document.getElementById('instruction-text');
+    const overlayEl = document.getElementById('instruction-overlay');
+    if (!instructionEl || !overlayEl) return;
+
+    overlayEl.style.display = 'block';
+    instructionEl.textContent = '';
+    let index = 0;
+
+    const typeNext = () => {
+        if (index <= text.length) {
+            instructionEl.textContent = text.slice(0, index);
+            index += 1;
+            setTimeout(typeNext, 40);
+        } else if (callback) {
+            callback();
+        }
+    };
+
+    typeNext();
+}
+
+function hideInstructionText() {
+    const overlayEl = document.getElementById('instruction-overlay');
+    if (overlayEl) {
+        overlayEl.style.display = 'none';
     }
 }
 
@@ -1397,11 +1453,11 @@ function levelComplete() {
     // Always show next level option - infinite levels!
     levelCompleteScreen.innerHTML = `
         <h1>${formatTemplate(theme.copy.levelCompleteTitle, { level: currentLevel })}</h1>
-        <p>${theme.copy.levelCompleteMessage}</p>
-        <p>Ready for the next challenge?</p>
-        <button id="next-level-button">${theme.copy.nextLevelCta}</button>
-        <button id="finish-run-button" style="margin-left: 10px;">${theme.copy.finishRunCta}</button>
-        <button id="restart-button" style="margin-left: 10px;">${theme.copy.restartCta}</button>
+        <div class="score-actions-row">
+            <button id="next-level-button">${theme.copy.nextLevelCta}</button>
+            <button id="finish-run-button">${theme.copy.finishRunCta}</button>
+            <button id="restart-button">${theme.copy.restartCta}</button>
+        </div>
     `;
     
     document.body.appendChild(levelCompleteScreen);
@@ -1416,6 +1472,8 @@ function levelComplete() {
             levelCompleteScreen.remove();
             document.body.classList.add('game-started');
             currentLevel++;
+            gameReady = false; // Reset ready state
+            hasInteracted = false; // Reset interaction state
             startLevel();
         });
     }
@@ -1469,7 +1527,9 @@ function checkTargetReveal() {
 
 // Start a level
 function startLevel() {
-    gameStarted = true;
+    gameReady = true;
+    gameStarted = false; // Will be set to true when user moves
+    hasInteracted = false;
     document.body.classList.add('game-started');
     targetsFound = 0;
     setActiveLevelAssetOverrides(currentTheme);
@@ -1503,6 +1563,29 @@ function startLevel() {
     
     // Initialize custom cursor for touch devices
     initCustomCursor();
+    
+    // Show instruction text based on level
+    if (currentLevel === 1) {
+        typeInstructionText('Find the treasure', () => {
+            // Text typing complete, ready for interaction
+        });
+    } else if (currentLevel === 2) {
+        typeInstructionText('Find the treasure, avoid the pirates', () => {
+            // Text typing complete, ready for interaction
+        });
+    } else {
+        // Level 3+: No instruction text
+        hideInstructionText();
+    }
+}
+
+// Actually start the game (called when user moves)
+function beginGame() {
+    if (!gameReady || gameStarted || hasInteracted) return;
+    
+    hasInteracted = true;
+    gameStarted = true;
+    // Keep instruction text visible
 }
 
 // Start game with selected level
@@ -1532,11 +1615,22 @@ function updateLevelDisplay() {
 
 // Track mouse movement
 document.addEventListener('mousemove', (e) => {
+    const prevX = mouseX;
+    const prevY = mouseY;
     mouseX = e.clientX;
     mouseY = e.clientY;
     
     // Update custom cursor position (for consistency)
     updateCustomCursor();
+    
+    // For desktop: check if user has touched distorted area to begin
+    if (gameReady && !hasInteracted && !isTouchDevice) {
+        // Check if cursor moved into a distorted area
+        const moved = Math.abs(mouseX - prevX) > 2 || Math.abs(mouseY - prevY) > 2;
+        if (moved && isNearDistortedArea()) {
+            beginGame();
+        }
+    }
     
     if (!gameStarted) return;
     updateBackground();
@@ -1562,7 +1656,7 @@ document.addEventListener('touchstart', (e) => {
     }
     
     // Only prevent default during active gameplay to allow button clicks on UI screens
-    if (gameStarted) {
+    if (gameStarted || gameReady) {
         e.preventDefault();
         isDragging = true;
         
@@ -1574,10 +1668,17 @@ document.addEventListener('touchstart', (e) => {
         // Update custom cursor position
         updateCustomCursor();
         
+        // Begin game on first touch if ready
+        if (gameReady && !hasInteracted) {
+            beginGame();
+        }
+        
         // Update game state
-        updateBackground();
-        checkTargetReveal();
-        checkHazardCollision();
+        if (gameStarted) {
+            updateBackground();
+            checkTargetReveal();
+            checkHazardCollision();
+        }
     }
 }, { passive: false });
 
@@ -1589,7 +1690,7 @@ document.addEventListener('touchmove', (e) => {
     }
     
     // Only prevent default and handle dragging during active gameplay
-    if (gameStarted) {
+    if (gameStarted || gameReady) {
         e.preventDefault();
         
         // Get the first touch point
@@ -1600,16 +1701,23 @@ document.addEventListener('touchmove', (e) => {
         // Update custom cursor position
         updateCustomCursor();
         
+        // Begin game on first touch move if ready
+        if (gameReady && !hasInteracted) {
+            beginGame();
+        }
+        
         // Update game state
-        updateBackground();
-        checkTargetReveal();
-        checkHazardCollision();
+        if (gameStarted) {
+            updateBackground();
+            checkTargetReveal();
+            checkHazardCollision();
+        }
     }
 }, { passive: false });
 
 document.addEventListener('touchend', (e) => {
     // Only prevent default during active gameplay
-    if (gameStarted) {
+    if (gameStarted || gameReady) {
         e.preventDefault();
         isDragging = false;
     }
