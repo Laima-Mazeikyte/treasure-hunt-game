@@ -1552,27 +1552,26 @@ document.addEventListener('mouseup', () => {
 
 // Touch support for mobile devices
 document.addEventListener('touchstart', (e) => {
-    // Prevent default to avoid scrolling and improve responsiveness
-    e.preventDefault();
-    
     // Mark as touch device and add class
     if (!isTouchDevice) {
         isTouchDevice = true;
         document.body.classList.add('touch-device');
     }
     
-    isDragging = true;
-    
-    // Get the first touch point
-    const touch = e.touches[0];
-    mouseX = touch.clientX;
-    mouseY = touch.clientY;
-    
-    // Update custom cursor position
-    updateCustomCursor();
-    
-    // Update game state if game is started
+    // Only prevent default during active gameplay to allow button clicks on UI screens
     if (gameStarted) {
+        e.preventDefault();
+        isDragging = true;
+        
+        // Get the first touch point
+        const touch = e.touches[0];
+        mouseX = touch.clientX;
+        mouseY = touch.clientY;
+        
+        // Update custom cursor position
+        updateCustomCursor();
+        
+        // Update game state
         updateBackground();
         checkTargetReveal();
         checkHazardCollision();
@@ -1580,25 +1579,25 @@ document.addEventListener('touchstart', (e) => {
 }, { passive: false });
 
 document.addEventListener('touchmove', (e) => {
-    // Always prevent default to ensure smooth dragging
-    e.preventDefault();
-    
     // Mark as touch device and add class
     if (!isTouchDevice) {
         isTouchDevice = true;
         document.body.classList.add('touch-device');
     }
     
-    // Get the first touch point
-    const touch = e.touches[0];
-    mouseX = touch.clientX;
-    mouseY = touch.clientY;
-    
-    // Update custom cursor position
-    updateCustomCursor();
-    
-    // Update game state if game is started
+    // Only prevent default and handle dragging during active gameplay
     if (gameStarted) {
+        e.preventDefault();
+        
+        // Get the first touch point
+        const touch = e.touches[0];
+        mouseX = touch.clientX;
+        mouseY = touch.clientY;
+        
+        // Update custom cursor position
+        updateCustomCursor();
+        
+        // Update game state
         updateBackground();
         checkTargetReveal();
         checkHazardCollision();
@@ -1606,10 +1605,11 @@ document.addEventListener('touchmove', (e) => {
 }, { passive: false });
 
 document.addEventListener('touchend', (e) => {
-    // Prevent default
-    e.preventDefault();
-    
-    isDragging = false;
+    // Only prevent default during active gameplay
+    if (gameStarted) {
+        e.preventDefault();
+        isDragging = false;
+    }
 }, { passive: false });
 
 // Function to update background gradient based on theme
