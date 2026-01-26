@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Dot Grid</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jacquard+12&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="custom-cursor"></div>
+    <div id="start-screen">
+        <h1 id="start-title">Treasure Hunt</h1>
+        <button id="start-button">Start</button>
+    </div>
+    <div id="landing-links">
+        <a href="about.html" class="landing-link">About</a>
+        <a href="leaderboard.html" class="landing-link">Leaderboard</a>
+    </div>
+    <div id="level-indicator" style="display: none;">
+        <span id="level-display">Level 1</span>
+    </div>
+    <div id="game-legend" style="display: none;">
+        <div class="legend-item">
+            <span class="legend-icon hazard-icon" id="hazard-legend-icon"></span>
+            <span class="legend-count" id="hazard-count">1</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-icon target-icon" id="target-legend-icon"></span>
+            <span class="legend-count" id="target-count">3</span>
+        </div>
+    </div>
+    <div id="cursor-indicators">
+        <div class="cursor-indicator">
+            <span class="indicator-icon target-icon" id="target-indicator-icon"></span>
+            <div class="indicator-bar">
+                <div class="indicator-fill target-fill" id="target-fill"></div>
+            </div>
+        </div>
+        <div class="cursor-indicator">
+            <span class="indicator-icon hazard-icon" id="hazard-indicator-icon"></span>
+            <div class="indicator-bar">
+                <div class="indicator-fill hazard-fill" id="hazard-fill"></div>
+            </div>
+        </div>
+    </div>
+    <div id="classic-shapes-layer" aria-hidden="true"></div>
+    <div id="grid-container"></div>
+    <script>
+        window.INSTANTDB_APP_ID = "f05a2d81-d348-4fa4-9043-dfbc280c80f3";
+    </script>
+    <script src="https://unpkg.com/lottie-web@5.12.2/build/player/lottie.min.js"></script>
+    <script type="module" src="./script.js"></script>
+</body>
+</html>

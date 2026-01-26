@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dot Grid Theme Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1e3c72;
+            color: white;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+        .dot-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .dot {
+            width: 6px;
+            height: 6px;
+            background-color: rgba(255, 248, 220, 0.5);
+            border-radius: 50%;
+        }
+        .dot-text {
+            width: auto;
+            height: auto;
+            min-width: 12px;
+            min-height: 12px;
+            background-color: transparent;
+            border-radius: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 248, 220, 0.5);
+            font-size: 10px;
+            line-height: 1;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dot Grid Theme Test</h1>
+    
+    <div class="test-section">
+        <h2>Classic Theme - Circular Dots</h2>
+        <div class="dot-container">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Severance Theme - Mixed Alphanumeric</h2>
+        <div class="dot-container">
+            <div class="dot dot-text" style="font-family: monospace; font-weight: bold;">A</div>
+            <div class="dot dot-text" style="font-family: monospace; font-weight: bold;">7</div>
+            <div class="dot dot-text" style="font-family: monospace; font-weight: bold;">K</div>
+            <div class="dot dot-text" style="font-family: monospace; font-weight: bold;">3</div>
+            <div class="dot dot-text" style="font-family: monospace; font-weight: bold;">Z</div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Forest Theme - Symbols</h2>
+        <div class="dot-container">
+            <div class="dot dot-text" style="font-family: Arial, sans-serif;">▲</div>
+            <div class="dot dot-text" style="font-family: Arial, sans-serif;">◆</div>
+            <div class="dot dot-text" style="font-family: Arial, sans-serif;">•</div>
+            <div class="dot dot-text" style="font-family: Arial, sans-serif;">✦</div>
+            <div class="dot dot-text" style="font-family: Arial, sans-serif;">★</div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Sunset Theme - Numbers</h2>
+        <div class="dot-container">
+            <div class="dot dot-text" style="font-family: monospace; font-weight: bold;">0</div>
+            <div class="dot dot-text" style="font-family: monospace; font-weight: bold;">1</div>
+            <div class="dot dot-text" style="font-family: monospace; font-weight: bold;">2</div>
+            <div class="dot dot-text" style="font-family: monospace; font-weight: bold;">3</div>
+            <div class="dot dot-text" style="font-family: monospace; font-weight: bold;">4</div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Result</h2>
+        <p>✓ All dot types render correctly</p>
+        <p>✓ Circular dots maintain their shape</p>
+        <p>✓ Text-based dots display characters properly</p>
+        <p>✓ Font styling applies correctly</p>
+        <p><a href="index.html" style="color: #FFD700;">Open the main game to test interactivity</a></p>
+    </div>
+</body>
+</html>

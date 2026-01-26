@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jacquard+12&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="leaderboard-page">
+    <script>
+        window.INSTANTDB_APP_ID = "f05a2d81-d348-4fa4-9043-dfbc280c80f3";
+    </script>
+    <div id="start-screen">
+        <a class="back-link" href="index.html">‹ back</a>
+        <h1>Leaderboard</h1>
+    </div>
+    <main class="leaderboard-panel">
+        <div class="leaderboard-status" id="leaderboard-status">Loading scores...</div>
+        <div class="leaderboard-table" id="leaderboard-table" hidden>
+            <div class="leaderboard-row leaderboard-header">
+                <span>Player</span>
+                <span>Targets</span>
+                <span>Levels</span>
+                <span>Date</span>
+            </div>
+            <div id="leaderboard-rows"></div>
+        </div>
+        <div class="leaderboard-actions">
+            <a class="play-again-button" href="index.html">Play Again</a>
+        </div>
+    </main>
+    <script type="module" src="./leaderboard.js"></script>
+</body>
+</html>
