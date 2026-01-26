@@ -63,6 +63,23 @@ body.game-started #landing-links {
     display: none;
 }
 
+body.game-started #version-number {
+    display: none;
+}
+
+#version-number {
+    position: fixed;
+    left: 12px;
+    bottom: 12px;
+    color: rgba(102, 194, 255, 0.6);
+    font-size: 16px;
+    font-family: 'Arial', sans-serif;
+    letter-spacing: 0.5px;
+    z-index: 1000;
+    pointer-events: none;
+    user-select: none;
+}
+
 /* Retro CRT-style screen filter */
 body::before {
     content: '';
@@ -242,6 +259,12 @@ body.game-started #classic-shapes-layer {
     .landing-link {
         font-size: 24px;
     }
+
+    #version-number {
+        left: 10px;
+        bottom: 10px;
+        font-size: 14px;
+    }
 }
 
 @media (max-width: 600px) {
@@ -270,6 +293,12 @@ body.game-started #classic-shapes-layer {
     .landing-link {
         font-size: 20px;
     }
+
+    #version-number {
+        left: 8px;
+        bottom: 8px;
+        font-size: 12px;
+    }
 }
 
 @media (max-width: 420px) {
@@ -282,6 +311,12 @@ body.game-started #classic-shapes-layer {
     }
     .landing-link {
         font-size: 18px;
+    }
+
+    #version-number {
+        left: 6px;
+        bottom: 6px;
+        font-size: 11px;
     }
 
     /* Adjust game UI for small screens */

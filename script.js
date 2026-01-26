@@ -1148,8 +1148,11 @@ function updateCursorIndicators(targetDistance, hazardDistance) {
 function updateCustomCursor() {
     if (!customCursorElement || !isTouchDevice) return;
     
+    // Position the cursor indicator at the exact center of distortion
+    // Using transform for precise centering at the distortion point
     customCursorElement.style.left = `${mouseX}px`;
     customCursorElement.style.top = `${mouseY}px`;
+    customCursorElement.style.transform = 'translate(-50%, -50%)';
 }
 
 // Initialize custom cursor (simple circle, no asset needed)
@@ -1725,6 +1728,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     typeTitleText();
     createClassicFloatingShapes();
+    loadVersion();
 });
+
+// Load and display version number
+async function loadVersion() {
+    try {
+        const response = await fetch('version.json');
+        const data = await response.json();
+        const versionElement = document.getElementById('version-number');
+        if (versionElement && data.version) {
+            versionElement.textContent = `v${data.version}`;
+        }
+    } catch (error) {
+        console.error('Failed to load version:', error);
+    }
+}
 
 // Initialize (game starts when button is clicked)
