@@ -3,3 +3,4 @@ dist/
 .DS_Store
 npm-cache/
 .env
+# Note: docs/ is NOT ignored because it's used for GitHub Pages
