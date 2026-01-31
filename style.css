@@ -49,18 +49,35 @@ body.game-started.touch-device #custom-cursor {
 
 #instruction-overlay {
     position: fixed;
-    top: 24px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     z-index: 2500;
     pointer-events: none;
+    text-align: center;
+    transition: opacity 1s ease-out;
+}
+
+#instruction-overlay.dissolving {
+    opacity: 0;
 }
 
 #instruction-text {
-    font-size: 32px;
-    color: white;
+    font-size: 36px;
+    color: #4a6fa5;
     font-family: 'Jacquard 12', 'Arial', sans-serif;
-    white-space: nowrap;
+    white-space: pre-line;
+    line-height: 1.4;
+}
+
+.rule-cube {
+    display: inline-block;
+    width: 0.8em;
+    height: 0.8em;
+    border-radius: 6px;
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.4));
+    vertical-align: middle;
+    margin: 0 2px;
 }
 
 @keyframes pulse {
@@ -568,11 +585,24 @@ body.game-started #classic-shapes-layer {
     width: 24px;
     height: 24px;
     flex-shrink: 0;
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
     filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+    overflow: visible;
+    position: relative;
+}
+
+.legend-icon svg {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
 }
 
 .legend-label {
@@ -609,11 +639,24 @@ body.game-started #classic-shapes-layer {
 .indicator-icon {
     width: 12px;
     height: 12px;
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
     filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8));
+    overflow: visible;
+    position: relative;
+}
+
+.indicator-icon svg {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
 }
 
 .indicator-bar {
@@ -688,7 +731,7 @@ body.game-started #classic-shapes-layer {
 #game-over-screen,
 #level-complete-screen,
 .score-modal-card {
-    background: transparent;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     border: none;
     box-shadow: none;
     backdrop-filter: none;
@@ -869,6 +912,22 @@ body.game-started #classic-shapes-layer {
     will-change: opacity;
 }
 
+/* Ensure Lottie animations render properly */
+.target svg {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    pointer-events: none;
+}
+
+/* Ensure Lottie container is set up correctly */
+.target[lottie-rendered] {
+    overflow: visible !important;
+}
+
 /* Sprite animation support */
 .sprite-animation {
     image-rendering: -webkit-optimize-contrast;
@@ -881,9 +940,9 @@ body.game-started #classic-shapes-layer {
 
 .score-actions-row {
     display: flex;
-    justify-content: center;
-    gap: 12px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
     margin-top: 10px;
 }
 

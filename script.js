@@ -46,18 +46,11 @@ const themes = {
             hazardColor: { r: 53, g: 30, b: 40 }      // #351E28
         },
         assets: {
-            cursor: { src: 'assets/cursor-eye.svg', size: 32 },
-            target: { src: 'assets/target-diamond.webp', size: 40 },
-            hazard: { src: 'assets/hazard-skull.webp', size: 40 },
-            targetOptions: [
-                { src: 'assets/target-black-gem.webp', size: 40 },
-                { src: 'assets/target-diamond.webp', size: 40 },
-                { src: 'assets/target-red-gem.webp', size: 40 },
-                { src: 'assets/target-red-oval-gem.webp', size: 40 }
-            ],
-            hazardOptions: [
-                { src: 'assets/hazard-skull.webp', size: 40 }
-            ]
+            // cursor asset removed - file doesn't exist
+            target: { src: 'assets/target-gem-1.json', size: 40 },
+            hazard: { src: 'assets/hazard-skull.json', size: 28 }
+            // targetOptions removed - using single .json animation for all levels
+            // hazardOptions removed - using single hazard asset
         },
         copy: {
             gameTitle: 'Treasure Hunt',
@@ -78,8 +71,7 @@ const themes = {
             finishRunCta: 'Finish Run'
         },
         levelOverrides: {
-            2: { target: { src: 'assets/target-crown.svg' } },
-            3: { target: { src: 'assets/target-trophy.svg' } }
+            // Removed level-specific overrides - using same .json animation for all levels
         },
         dotGrid: {
             type: 'symbols',
@@ -110,9 +102,8 @@ const themes = {
             hazardColor: { r: 7, g: 48, b: 75 }       // #07304B
         },
         assets: {
-            cursor: { src: 'assets/cursor-eye.svg', size: 32 },
-            target: { src: 'assets/target-gem.webp', size: 40 },
-            hazard: { src: 'assets/hazard-skull.webp', size: 40 }
+            target: { src: 'assets/target-gem-1.json', size: 40 },
+            hazard: { src: 'assets/hazard-skull.json', size: 28 }
         },
         copy: {
             gameTitle: 'Severance Hunt',
@@ -162,9 +153,8 @@ const themes = {
             hazardColor: { r: 50, g: 33, b: 22 }      // #322116
         },
         assets: {
-            cursor: { src: 'assets/cursor-eye.svg', size: 32 },
-            target: { src: 'assets/target-gem.webp', size: 40 },
-            hazard: { src: 'assets/hazard-skull.webp', size: 40 }
+            target: { src: 'assets/target-gem-1.json', size: 40 },
+            hazard: { src: 'assets/hazard-skull.json', size: 28 }
         },
         copy: {
             gameTitle: 'Firefly Forest',
@@ -418,6 +408,26 @@ async function loadAnimatedSVG(element, asset) {
     }
 }
 
+// Helper function to get Lottie library
+function getLottieLibrary() {
+    // lottie-web from unpkg can expose itself in different ways
+    // Try window.lottie first (most common)
+    if (window.lottie) {
+        if (typeof window.lottie.loadAnimation === 'function') {
+            return window.lottie;
+        }
+        // Sometimes it's window.lottie.default
+        if (window.lottie.default && typeof window.lottie.default.loadAnimation === 'function') {
+            return window.lottie.default;
+        }
+    }
+    // Try global lottie (for non-module contexts)
+    if (typeof lottie !== 'undefined' && typeof lottie.loadAnimation === 'function') {
+        return lottie;
+    }
+    return null;
+}
+
 // Enhanced asset application function supporting multiple formats
 async function applyAssetToElement(element, asset) {
     if (!element || !asset || !asset.src) return;
@@ -446,22 +456,173 @@ async function applyAssetToElement(element, asset) {
     // Handle different asset types
     switch (assetType) {
         case 'lottie':
-            if (window.lottie) {
-                const animation = window.lottie.loadAnimation({
-                    container: element,
-                    renderer: 'svg',
-                    loop: true,
-                    autoplay: true,
-                    path: asset.src
-                });
-                animationInstances.set(element, animation);
-                
-                // Observe for visibility optimization
-                if (visibilityObserver) {
-                    visibilityObserver.observe(element);
+            // Wait for Lottie library to be available (with timeout)
+            let lottieLib = getLottieLibrary();
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            while (!lottieLib && attempts < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                lottieLib = getLottieLibrary();
+                attempts++;
+            }
+            
+            if (lottieLib) {
+                try {
+                    // Ensure element is in DOM (Lottie requires this)
+                    if (!element.parentNode) {
+                        console.warn('Element not in DOM yet, waiting...');
+                        await new Promise(resolve => {
+                            const checkInterval = setInterval(() => {
+                                if (element.parentNode) {
+                                    clearInterval(checkInterval);
+                                    resolve();
+                                }
+                            }, 50);
+                            // Timeout after 1 second
+                            setTimeout(() => {
+                                clearInterval(checkInterval);
+                                resolve();
+                            }, 1000);
+                        });
+                    }
+                    
+                    // Clear any background styles that might interfere
+                    element.style.backgroundImage = '';
+                    element.style.backgroundSize = '';
+                    element.style.backgroundRepeat = '';
+                    element.style.backgroundPosition = '';
+                    
+                    // Ensure element has proper display and dimensions for Lottie
+                    element.style.display = 'flex';
+                    element.style.alignItems = 'center';
+                    element.style.justifyContent = 'center';
+                    element.style.overflow = 'visible';
+                    
+                    // Ensure dimensions are set
+                    element.style.width = `${size}px`;
+                    element.style.height = `${size}px`;
+                    
+                    console.log('Loading Lottie animation from:', asset.src);
+                    console.log('Element details:', {
+                        inDOM: !!element.parentNode,
+                        display: element.style.display,
+                        width: element.style.width,
+                        height: element.style.height,
+                        opacity: window.getComputedStyle(element).opacity
+                    });
+                    
+                    const animation = lottieLib.loadAnimation({
+                        container: element,
+                        renderer: 'svg',
+                        loop: true,
+                        autoplay: true,
+                        path: asset.src
+                    });
+                    
+                    console.log('Lottie animation instance created:', animation);
+                    
+                    // Handle animation events
+                    animation.addEventListener('data_failed', (error) => {
+                        console.error('Lottie animation failed to load:', asset.src, error);
+                    });
+                    
+                    animation.addEventListener('DOMLoaded', () => {
+                        console.log('Lottie animation DOM loaded:', asset.src);
+                        // Mark element as having Lottie rendered
+                        element.setAttribute('lottie-rendered', 'true');
+                        
+                        // Force SVG to fill container
+                        const svg = element.querySelector('svg');
+                        if (svg) {
+                            svg.style.width = '100%';
+                            svg.style.height = '100%';
+                            svg.style.display = 'block';
+                            svg.style.position = 'absolute';
+                            svg.style.top = '0';
+                            svg.style.left = '0';
+                            console.log('SVG styled:', svg);
+                            console.log('SVG dimensions:', {
+                                width: svg.offsetWidth,
+                                height: svg.offsetHeight,
+                                computedWidth: window.getComputedStyle(svg).width,
+                                computedHeight: window.getComputedStyle(svg).height
+                            });
+                        } else {
+                            console.warn('No SVG found in element after DOMLoaded');
+                            console.log('Element HTML:', element.innerHTML.substring(0, 200));
+                        }
+                        
+                        // Debug: Check element visibility
+                        const computedStyle = window.getComputedStyle(element);
+                        console.log('Element computed style:', {
+                            opacity: computedStyle.opacity,
+                            display: computedStyle.display,
+                            visibility: computedStyle.visibility,
+                            width: computedStyle.width,
+                            height: computedStyle.height
+                        });
+                    });
+                    
+                    animation.addEventListener('data_ready', () => {
+                        console.log('Lottie animation data ready:', asset.src);
+                    });
+                    
+                    animation.addEventListener('loaded_images', () => {
+                        console.log('Lottie images loaded:', asset.src);
+                    });
+                    
+                    animation.addEventListener('config_ready', () => {
+                        console.log('Lottie config ready:', asset.src);
+                    });
+                    
+                    // Ensure SVG fills container (with multiple attempts)
+                    const styleSVG = () => {
+                        const svg = element.querySelector('svg');
+                        if (svg) {
+                            svg.style.width = '100%';
+                            svg.style.height = '100%';
+                            svg.style.display = 'block';
+                            svg.style.position = 'absolute';
+                            svg.style.top = '0';
+                            svg.style.left = '0';
+                            console.log('SVG styled successfully');
+                            return true;
+                        }
+                        return false;
+                    };
+                    
+                    // Try immediately
+                    if (!styleSVG()) {
+                        // Try after a short delay
+                        setTimeout(() => {
+                            if (!styleSVG()) {
+                                // Try again after DOMLoaded
+                                setTimeout(styleSVG, 200);
+                            }
+                        }, 50);
+                    }
+                    
+                    animationInstances.set(element, animation);
+                    
+                    // Observe for visibility optimization
+                    if (visibilityObserver) {
+                        visibilityObserver.observe(element);
+                    }
+                } catch (error) {
+                    console.error('Error loading Lottie animation:', error, asset.src);
+                    console.error('Error details:', error.stack);
+                    // Fallback: show error indicator
+                    element.style.background = 'rgba(255, 0, 0, 0.3)';
+                    element.style.border = '2px solid red';
                 }
             } else {
-                console.warn('Lottie library not loaded');
+                console.error('Lottie library not available after waiting. Asset:', asset.src);
+                console.error('window.lottie:', window.lottie);
+                console.error('typeof lottie:', typeof lottie);
+                // Fallback: show error indicator
+                element.style.background = 'rgba(255, 0, 0, 0.3)';
+                element.style.border = '2px solid red';
             }
             break;
 
@@ -696,7 +857,7 @@ function getLevelConfig(level, themeId = currentTheme) {
         hazards: hazardsCount,
         targets: targetsCount,
         assets: {
-            cursor: resolveAsset(theme.assets.cursor, levelOverride.cursor),
+            ...(theme.assets.cursor ? { cursor: resolveAsset(theme.assets.cursor, levelOverride.cursor) } : {}),
             target: resolveAsset(theme.assets.target, mergedTargetOverride),
             hazard: resolveAsset(theme.assets.hazard, levelOverride.hazard)
         },
@@ -775,7 +936,6 @@ function createTargets() {
     for (let i = 0; i < config.targets; i++) {
         const targetEl = document.createElement('div');
         targetEl.className = 'target';
-        applyAssetToElement(targetEl, targetAsset);
 
         // Random position, ensuring spacing from hazards and cursor
         let x, y, tooCloseToEnemy, tooCloseToCursor;
@@ -800,7 +960,13 @@ function createTargets() {
         targetEl.style.left = `${x - targetRadius}px`;
         targetEl.style.top = `${y - targetRadius}px`;
 
+        // Add to DOM first, then apply asset (Lottie needs element in DOM)
         document.body.appendChild(targetEl);
+        
+        // Apply asset after element is in DOM (async, but don't wait - let it load in background)
+        applyAssetToElement(targetEl, targetAsset).catch(err => {
+            console.error('Failed to apply asset to target:', err);
+        });
 
         targets.push({
             element: targetEl,
@@ -1226,32 +1392,159 @@ function typeTitleText() {
     }
 }
 
-function typeInstructionText(text, callback) {
+function typeInstructionText(text, callback, isHTML = false) {
     const instructionEl = document.getElementById('instruction-text');
     const overlayEl = document.getElementById('instruction-overlay');
     if (!instructionEl || !overlayEl) return;
 
     overlayEl.style.display = 'block';
-    instructionEl.textContent = '';
-    let index = 0;
+    overlayEl.style.opacity = '1';
+    overlayEl.classList.remove('dissolving');
+    
+    if (isHTML) {
+        // For HTML content, type it out by revealing characters progressively
+        instructionEl.innerHTML = '';
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = text;
+        const fullHTML = text;
+        
+        // Create a temporary element to parse the HTML structure
+        let visibleText = '';
+        let htmlBuffer = '';
+        let insideTag = false;
+        let index = 0;
+        
+        const typeNext = () => {
+            if (index < fullHTML.length) {
+                const char = fullHTML[index];
+                
+                if (char === '<') {
+                    insideTag = true;
+                    htmlBuffer = '<';
+                } else if (char === '>' && insideTag) {
+                    htmlBuffer += '>';
+                    visibleText += htmlBuffer;
+                    htmlBuffer = '';
+                    insideTag = false;
+                } else if (insideTag) {
+                    htmlBuffer += char;
+                } else {
+                    visibleText += char;
+                }
+                
+                instructionEl.innerHTML = visibleText;
+                index++;
+                setTimeout(typeNext, 25);
+            } else {
+                // After typing is complete, immediately start dissolve
+                setTimeout(() => {
+                    overlayEl.classList.add('dissolving');
+                    setTimeout(() => {
+                        overlayEl.style.display = 'none';
+                        if (callback) {
+                            callback();
+                        }
+                    }, 1000);
+                }, 100); // Small delay after typing completes
+            }
+        };
+        
+        typeNext();
+    } else {
+        // Original text typing animation
+        instructionEl.textContent = '';
+        let index = 0;
 
+        const typeNext = () => {
+            if (index <= text.length) {
+                instructionEl.textContent = text.slice(0, index);
+                index += 1;
+                setTimeout(typeNext, 25);
+            } else {
+                // After typing is complete, immediately start dissolve
+                setTimeout(() => {
+                    overlayEl.classList.add('dissolving');
+                    // After dissolve animation completes, call callback
+                    setTimeout(() => {
+                        overlayEl.style.display = 'none';
+                        if (callback) {
+                            callback();
+                        }
+                    }, 1000); // Match the CSS transition duration
+                }, 100); // Small delay after typing completes
+            }
+        };
+
+        typeNext();
+    }
+}
+
+function typeInstructionTextWithRules(mainText, rules, callback) {
+    const instructionEl = document.getElementById('instruction-text');
+    const overlayEl = document.getElementById('instruction-overlay');
+    if (!instructionEl || !overlayEl) return;
+
+    overlayEl.style.display = 'block';
+    overlayEl.style.opacity = '1';
+    overlayEl.classList.remove('dissolving');
+    instructionEl.innerHTML = '';
+    
+    let index = 0;
+    
     const typeNext = () => {
-        if (index <= text.length) {
-            instructionEl.textContent = text.slice(0, index);
+        if (index <= mainText.length) {
+            instructionEl.textContent = mainText.slice(0, index);
             index += 1;
-            setTimeout(typeNext, 40);
-        } else if (callback) {
-            callback();
+            setTimeout(typeNext, 25);
+        } else {
+            // After main text is typed, show all rules at once
+            instructionEl.innerHTML = mainText + '<br>' + rules;
+            
+            // Wait 3 seconds then dissolve
+            setTimeout(() => {
+                overlayEl.classList.add('dissolving');
+                setTimeout(() => {
+                    overlayEl.style.display = 'none';
+                    if (callback) {
+                        callback();
+                    }
+                }, 1000);
+            }, 3000);
         }
     };
-
+    
     typeNext();
+}
+
+function showStartMessage(callback) {
+    const instructionEl = document.getElementById('instruction-text');
+    const overlayEl = document.getElementById('instruction-overlay');
+    if (!instructionEl || !overlayEl) return;
+
+    overlayEl.style.display = 'block';
+    overlayEl.style.opacity = '1';
+    overlayEl.classList.remove('dissolving');
+    instructionEl.textContent = 'Start!';
+
+    // Wait a moment, then dissolve
+    setTimeout(() => {
+        overlayEl.classList.add('dissolving');
+        setTimeout(() => {
+            overlayEl.style.display = 'none';
+            if (callback) {
+                callback();
+            }
+        }, 1000); // Match the CSS transition duration
+    }, 800); // Show "Start!" for 800ms
 }
 
 function hideInstructionText() {
     const overlayEl = document.getElementById('instruction-overlay');
     if (overlayEl) {
-        overlayEl.style.display = 'none';
+        overlayEl.classList.add('dissolving');
+        setTimeout(() => {
+            overlayEl.style.display = 'none';
+        }, 1000);
     }
 }
 
@@ -1527,12 +1820,13 @@ function checkTargetReveal() {
 
 // Start a level
 function startLevel() {
-    gameReady = true;
+    gameReady = false; // Will be set to true after instruction sequence
     gameStarted = false; // Will be set to true when user moves
     hasInteracted = false;
     document.body.classList.add('game-started');
     targetsFound = 0;
-    setActiveLevelAssetOverrides(currentTheme);
+    // setActiveLevelAssetOverrides(currentTheme); // Disabled - using single asset, no randomization
+    activeLevelAssetOverrides = null; // Clear any previous overrides
     updatePerformanceModeState();
     
     // Show game UI
@@ -1566,16 +1860,25 @@ function startLevel() {
     
     // Show instruction text based on level
     if (currentLevel === 1) {
-        typeInstructionText('Find the treasure', () => {
-            // Text typing complete, ready for interaction
-        });
+        const message = 'Find the treasure\nIf it\'s <span style="color: #FF5C34;">red</span> the treasure is near';
+        typeInstructionText(message, () => {
+            // After rules dissolve, show "Start!" then enable game
+            showStartMessage(() => {
+                gameReady = true; // Now ready for interaction
+            });
+        }, true);
     } else if (currentLevel === 2) {
-        typeInstructionText('Find the treasure, avoid the pirates', () => {
-            // Text typing complete, ready for interaction
-        });
+        const message = 'Find the treasure\nIf it\'s <span style="color: #FF5C34;">red</span> the treasure is near\nIf it\'s <span style="color: #351E28;">dark</span> there is danger';
+        typeInstructionText(message, () => {
+            // After rules dissolve, show "Start!" then enable game
+            showStartMessage(() => {
+                gameReady = true; // Now ready for interaction
+            });
+        }, true);
     } else {
-        // Level 3+: No instruction text
+        // Level 3+: No instruction text, game ready immediately
         hideInstructionText();
+        gameReady = true;
     }
 }
 

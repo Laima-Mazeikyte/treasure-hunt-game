@@ -7,9 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Jacquard+12&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="./assets/main-DgEBCTin.js"></script>
+  <script type="module" crossorigin src="./assets/main-D8L2ZTQB.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/instantdb-D5dQ5UkJ.js">
-  <link rel="stylesheet" crossorigin href="./assets/style-Cvpdor2J.css">
+  <link rel="stylesheet" crossorigin href="./assets/style-COFXMjZ8.css">
 </head>
 <body>
     <div id="start-screen">
@@ -58,5 +58,15 @@
         window.INSTANTDB_APP_ID = "f05a2d81-d348-4fa4-9043-dfbc280c80f3";
     </script>
     <script src="https://unpkg.com/lottie-web@5.12.2/build/player/lottie.min.js"></script>
+    <script>
+        // Verify Lottie loaded
+        window.addEventListener('load', () => {
+            console.log('Lottie library check:', {
+                'window.lottie': !!window.lottie,
+                'window.lottie.loadAnimation': !!(window.lottie && window.lottie.loadAnimation),
+                'lottie object': window.lottie
+            });
+        });
+    </script>
 </body>
 </html>
