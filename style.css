@@ -188,6 +188,12 @@ body.game-started:not(.performance-mode)::after {
     opacity: 0.6;
 }
 
+@media (max-width: 900px) {
+    body::after {
+        display: none;
+    }
+}
+
 @keyframes scanline-drift {
     0% {
         background-position: 0 0;
