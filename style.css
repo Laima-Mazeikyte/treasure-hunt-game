@@ -47,6 +47,11 @@ body.game-started.touch-device #custom-cursor {
     opacity: 1;
 }
 
+/* Hide cursor during instructions in levels 1 and 2 */
+body.game-started.touch-device.instructions-active #custom-cursor {
+    opacity: 0;
+}
+
 #instruction-overlay {
     position: fixed;
     top: 50%;
@@ -379,12 +384,13 @@ body.game-started #classic-shapes-layer {
     /* Adjust game UI for small screens */
     #level-indicator {
         font-size: 20px;
-        bottom: 10px;
+        top: 10px;
         left: 10px;
     }
 
     #game-legend {
         bottom: 10px;
+        left: 10px;
         gap: 10px;
     }
 
@@ -454,7 +460,7 @@ body.game-started #classic-shapes-layer {
 
 #level-indicator {
     position: fixed;
-    bottom: 12px;
+    top: 12px;
     left: 12px;
     font-family: 'Tiny5', 'Arial', sans-serif;
     font-size: 28px;
@@ -472,8 +478,7 @@ body.game-started #classic-shapes-layer {
 #game-legend {
     position: fixed;
     bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 12px;
     display: flex;
     flex-direction: row;
     gap: 15px;

@@ -1397,21 +1397,32 @@ function startLevel() {
     // Initialize custom cursor for touch devices
     initCustomCursor();
     
+    // Set pointer to center of screen when level begins
+    mouseX = window.innerWidth / 2;
+    mouseY = window.innerHeight / 2;
+    updateCustomCursor();
+    
     // Show instruction text based on level
     if (currentLevel === 1) {
+        // Hide cursor during instructions for level 1
+        document.body.classList.add('instructions-active');
         const message = 'Find all the Treasure!\n<span style="color: #FF5C34;">Red</span> = treasure is near';
         typeInstructionText(message, () => {
             // After rules dissolve, show "Start!" then enable game
             showStartMessage(() => {
                 gameReady = true; // Now ready for interaction
+                document.body.classList.remove('instructions-active'); // Show cursor
             });
         }, true);
     } else if (currentLevel === 2) {
+        // Hide cursor during instructions for level 2
+        document.body.classList.add('instructions-active');
         const message = 'Find all the Treasure!\n<span style="color: #FF5C34;">Red</span> = treasure is near\n<span style="color: #351E28;">Dark</span> = danger is near';
         typeInstructionText(message, () => {
             // After rules dissolve, show "Start!" then enable game
             showStartMessage(() => {
                 gameReady = true; // Now ready for interaction
+                document.body.classList.remove('instructions-active'); // Show cursor
             });
         }, true);
     } else {
