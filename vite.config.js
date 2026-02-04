@@ -17,7 +17,9 @@ export default defineConfig({
         manualChunks: undefined
       }
     },
-    copyPublicDir: false
+    // Keep public assets available in `docs/` for static hosting.
+    // Our `publicDir` is `assets`, and the app references those files at runtime.
+    copyPublicDir: true
   },
   publicDir: 'assets'
 });

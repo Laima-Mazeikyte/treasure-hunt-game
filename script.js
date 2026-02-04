@@ -24,8 +24,6 @@ let currentHoveredTarget = null; // Track which target is currently hovered
 let hazards = []; // Array of hazard enemies
 let currentLevel = 1; // Track current level
 let totalTargets = 3; // Total targets for current level
-let activeLevelAssetOverrides = null; // Randomized assets for the current level
-const lastRandomizedAssetsByTheme = new Map(); // Prevent immediate repeats per theme
 let totalTargetsCollected = 0;
 let levelsCompleted = 0;
 let scoreSubmitted = false;
@@ -46,11 +44,9 @@ const themes = {
             hazardColor: { r: 53, g: 30, b: 40 }      // #351E28
         },
         assets: {
-            // cursor asset removed - file doesn't exist
-            target: { src: 'assets/target-gem-1.json', size: 40 },
-            hazard: { src: 'assets/hazard-skull.json', size: 28 }
-            // targetOptions removed - using single .json animation for all levels
-            // hazardOptions removed - using single hazard asset
+            // NOTE: with `publicDir: 'assets'` these resolve from the site root.
+            target: { src: 'target-gem-01.svg', size: 32, randomColor: true },
+            hazard: { src: 'hazzard-octopus.svg', size: 32 }
         },
         copy: {
             gameTitle: 'Treasure Hunt',
@@ -70,9 +66,7 @@ const themes = {
             saveScoreCta: 'Save Score',
             finishRunCta: 'Finish Run'
         },
-        levelOverrides: {
-            // Removed level-specific overrides - using same .json animation for all levels
-        },
+        levelOverrides: {},
         dotGrid: {
             type: 'symbols',
             characters: '▲◆•✦★◊',
@@ -92,105 +86,6 @@ const themes = {
             dangerShakeAmount: 20,     // Max shake intensity near hazards
             dangerShakeExponent: 1.5,  // Controls shake curve (higher = more dramatic)
             dangerZone: 200            // Distance from hazard to trigger effects
-        }
-    },
-    severance: {
-        name: 'Severance',
-        colors: {
-            baseColor: { r: 0, g: 139, b: 146 },      // #008B92
-            targetColor: { r: 226, g: 250, b: 251 },  // #E2FAFB
-            hazardColor: { r: 7, g: 48, b: 75 }       // #07304B
-        },
-        assets: {
-            target: { src: 'assets/target-gem-1.json', size: 40 },
-            hazard: { src: 'assets/hazard-skull.json', size: 28 }
-        },
-        copy: {
-            gameTitle: 'Severance Hunt',
-            themePrompt: 'Select a theme:',
-            levelPrompt: 'Select a level to start:',
-            levelButtonTemplate: 'Level {level}',
-            levelButtonSubtext: '{hazards} Hazards, {targets} Targets',
-            legendTargetLabel: 'Targets',
-            legendHazardLabel: 'Hazards',
-            gameOverTitle: 'Game Over!',
-            gameOverMessage: 'You were caught by a hazard!',
-            levelCompleteTitle: 'Level {level} complete!',
-            levelCompleteMessage: 'All targets found!',
-            nextLevelCta: 'Next Level',
-            restartCta: 'Restart Game',
-            playAgainCta: 'Play Again',
-            saveScoreCta: 'Save Score',
-            finishRunCta: 'Finish Run'
-        },
-        levelOverrides: {},
-        dotGrid: {
-            type: 'mixed',
-            characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-            fontSize: 14,
-            fontFamily: 'monospace',
-            fontWeight: 'bold',
-            colorSource: 'hazard'
-        },
-        dotBehavior: {
-            pushRadius: 150,           // Match classic distortion
-            maxPushDistance: 60,
-            scaleRadius: 150,
-            maxScale: 1.5,
-            visibilityRadius: 250,
-            fullVisibilityRadius: 100,
-            baseJitterAmount: 2.5,     // Always jitter slightly
-            dangerShakeAmount: 20,
-            dangerShakeExponent: 1.5,
-            dangerZone: 200
-        }
-    },
-    forest: {
-        name: 'Firefly Forest',
-        colors: {
-            baseColor: { r: 52, g: 97, b: 69 },       // #346145
-            targetColor: { r: 255, g: 185, b: 80 },   // #FFB950
-            hazardColor: { r: 50, g: 33, b: 22 }      // #322116
-        },
-        assets: {
-            target: { src: 'assets/target-gem-1.json', size: 40 },
-            hazard: { src: 'assets/hazard-skull.json', size: 28 }
-        },
-        copy: {
-            gameTitle: 'Firefly Forest',
-            themePrompt: 'Select a theme:',
-            levelPrompt: 'Select a level to start:',
-            levelButtonTemplate: 'Level {level}',
-            levelButtonSubtext: '{hazards} Hazards, {targets} Targets',
-            legendTargetLabel: 'Targets',
-            legendHazardLabel: 'Hazards',
-            gameOverTitle: 'Game Over!',
-            gameOverMessage: 'You were caught by a hazard!',
-            levelCompleteTitle: 'Level {level} complete!',
-            levelCompleteMessage: 'All targets found!',
-            nextLevelCta: 'Next Level',
-            restartCta: 'Restart Game',
-            playAgainCta: 'Play Again',
-            saveScoreCta: 'Save Score',
-            finishRunCta: 'Finish Run'
-        },
-        levelOverrides: {},
-        dotGrid: {
-            type: 'symbols',
-            characters: '▲◆•✦★◊',
-            fontSize: 10,
-            fontFamily: 'Arial, sans-serif'
-        },
-        dotBehavior: {
-            pushRadius: 200,           // Larger, gentle flowing influence
-            maxPushDistance: 40,       // Subtle, organic movements
-            scaleRadius: 180,          // Gradual scaling
-            maxScale: 1.3,             // Gentle size changes
-            visibilityRadius: 280,     // Soft, wide visibility
-            fullVisibilityRadius: 120, // Gentle fade-in
-            dangerShakeAmount: 10,     // Gentle rustling effect
-            dangerShakeExponent: 1.2,  // Smooth, natural movements
-            dangerZone: 200            // Same danger zone
         }
     }
 };
@@ -221,211 +116,15 @@ function getThemeConfig(themeId) {
     return themes[themeId] || themes.classic;
 }
 
-function resolveAsset(baseAsset, overrideAsset = {}) {
-    return { ...baseAsset, ...overrideAsset };
-}
-
-function normalizeAssetOption(option) {
-    if (!option) return null;
-    if (typeof option === 'string') return { src: option };
-    return option;
-}
-
-function pickRandomAssetOption(options = []) {
-    if (!options.length) return null;
-    const choice = options[Math.floor(Math.random() * options.length)];
-    return normalizeAssetOption(choice);
-}
-
-function pickRandomAssetOptionWithGap(options = [], lastSrc) {
-    if (!options.length) return null;
-    if (options.length === 1) return normalizeAssetOption(options[0]);
-
-    const filtered = options.filter(option => normalizeAssetOption(option)?.src !== lastSrc);
-    const pool = filtered.length ? filtered : options;
-    const choice = pool[Math.floor(Math.random() * pool.length)];
-    return normalizeAssetOption(choice);
-}
-
-function setActiveLevelAssetOverrides(themeId = currentTheme) {
-    const theme = getThemeConfig(themeId);
-    const lastRandomized = lastRandomizedAssetsByTheme.get(themeId) || {};
-    const randomizedTarget = pickRandomAssetOptionWithGap(
-        theme.assets?.targetOptions,
-        lastRandomized.targetSrc
-    );
-    const randomizedHazard = pickRandomAssetOption(theme.assets?.hazardOptions);
-    activeLevelAssetOverrides = {
-        ...(randomizedTarget ? { target: randomizedTarget } : {}),
-        ...(randomizedHazard ? { hazard: randomizedHazard } : {})
-    };
-    if (randomizedTarget?.src) {
-        lastRandomizedAssetsByTheme.set(themeId, {
-            ...lastRandomized,
-            targetSrc: randomizedTarget.src
-        });
-    }
-}
-
-// Animation instance management for all types
-const animationInstances = new Map();
-const svgCache = new Map(); // Cache for loaded SVG content
-
-// Performance optimization: Track visibility and pause off-screen animations
-let visibilityObserver = null;
-
-// Initialize Intersection Observer for performance optimization
-function initVisibilityObserver() {
-    if (visibilityObserver) return;
-    
-    const options = {
-        root: null,
-        rootMargin: '50px', // Start loading slightly before element is visible
-        threshold: 0
-    };
-
-    visibilityObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            const animation = animationInstances.get(entry.target);
-            if (!animation) return;
-
-            if (entry.isIntersecting) {
-                // Element is visible, resume animation
-                if (animation.play) {
-                    animation.play(); // Lottie
-                } else if (animation.start) {
-                    animation.start(); // SpriteAnimation
-                }
-            } else {
-                // Element is off-screen, pause animation
-                if (animation.pause) {
-                    animation.pause(); // Both Lottie and SpriteAnimation
-                }
-            }
-        });
-    }, options);
-}
-
-// Call this during game initialization
-initVisibilityObserver();
-
-// Sprite sheet animation manager
-class SpriteAnimation {
-    constructor(element, asset) {
-        this.element = element;
-        this.asset = asset;
-        this.isPlaying = false;
-        this.currentFrame = 0;
-        this.animationFrame = null;
-        this.lastFrameTime = 0;
-    }
-
-    start() {
-        if (this.isPlaying) return;
-        this.isPlaying = true;
-        this.lastFrameTime = performance.now();
-        this.animate();
-    }
-
-    animate() {
-        if (!this.isPlaying) return;
-
-        const now = performance.now();
-        const frameDuration = this.asset.frameDuration || 100;
-
-        if (now - this.lastFrameTime >= frameDuration) {
-            this.currentFrame = (this.currentFrame + 1) % this.asset.frames;
-            const frameWidth = this.asset.size || 40;
-            const xPos = -this.currentFrame * frameWidth;
-            this.element.style.backgroundPosition = `${xPos}px 0`;
-            this.lastFrameTime = now;
-        }
-
-        this.animationFrame = requestAnimationFrame(() => this.animate());
-    }
-
-    pause() {
-        this.isPlaying = false;
-        if (this.animationFrame) {
-            cancelAnimationFrame(this.animationFrame);
-            this.animationFrame = null;
-        }
-    }
-
-    destroy() {
-        this.pause();
-        this.element = null;
-    }
-}
-
-// Clear all animation instances for an element
+// Clear any previously applied asset content for an element.
+// (We removed Lottie/sprite support, so this is now a lightweight cleanup helper.)
 function clearAnimationForElement(element) {
-    const existing = animationInstances.get(element);
-    if (existing) {
-        // Handle different animation types
-        if (existing.destroy) {
-            existing.destroy(); // Lottie or SpriteAnimation
-        }
-        animationInstances.delete(element);
-    }
-    
-    // Stop observing for visibility
-    if (visibilityObserver && element) {
-        visibilityObserver.unobserve(element);
-    }
-}
-
-// Load and inject animated SVG content
-async function loadAnimatedSVG(element, asset) {
-    try {
-        // Check cache first
-        let svgContent = svgCache.get(asset.src);
-        
-        if (!svgContent) {
-            const response = await fetch(asset.src);
-            if (!response.ok) {
-                throw new Error(`Failed to load SVG: ${response.statusText}`);
-            }
-            svgContent = await response.text();
-            svgCache.set(asset.src, svgContent);
-        }
-
-        // Inject SVG content
-        element.innerHTML = svgContent;
-        
-        // Find the SVG element and ensure it fills the container
-        const svgElement = element.querySelector('svg');
-        if (svgElement) {
-            svgElement.style.width = '100%';
-            svgElement.style.height = '100%';
-            svgElement.style.display = 'block';
-        }
-
-        return true;
-    } catch (error) {
-        console.error('Error loading animated SVG:', error);
-        return false;
-    }
-}
-
-// Helper function to get Lottie library
-function getLottieLibrary() {
-    // lottie-web from unpkg can expose itself in different ways
-    // Try window.lottie first (most common)
-    if (window.lottie) {
-        if (typeof window.lottie.loadAnimation === 'function') {
-            return window.lottie;
-        }
-        // Sometimes it's window.lottie.default
-        if (window.lottie.default && typeof window.lottie.default.loadAnimation === 'function') {
-            return window.lottie.default;
-        }
-    }
-    // Try global lottie (for non-module contexts)
-    if (typeof lottie !== 'undefined' && typeof lottie.loadAnimation === 'function') {
-        return lottie;
-    }
-    return null;
+    if (!element) return;
+    element.innerHTML = '';
+    element.style.backgroundImage = '';
+    element.style.backgroundSize = '';
+    element.style.backgroundRepeat = '';
+    element.style.backgroundPosition = '';
 }
 
 // Enhanced asset application function supporting multiple formats
@@ -436,233 +135,74 @@ async function applyAssetToElement(element, asset) {
     element.style.width = `${size}px`;
     element.style.height = `${size}px`;
 
-    // Clear any existing animations
+    // Clear any previous asset content/styles
     clearAnimationForElement(element);
-    element.style.backgroundImage = '';
-    element.innerHTML = '';
 
-    // Detect asset type (auto-detect if not specified)
-    let assetType = asset.type;
-    if (!assetType) {
-        if (asset.src.endsWith('.json')) {
-            assetType = 'lottie';
-        } else if (asset.src.endsWith('.svg')) {
-            assetType = 'svg';
-        } else if (asset.src.match(/\.(png|jpg|jpeg|gif|webp)$/i)) {
-            assetType = asset.frames ? 'sprite' : 'image';
-        }
-    }
+    const isSvg = asset.src.endsWith('.svg');
+    const isImage = asset.src.match(/\.(png|jpg|jpeg|gif|webp)$/i);
 
-    // Handle different asset types
-    switch (assetType) {
-        case 'lottie':
-            // Wait for Lottie library to be available (with timeout)
-            let lottieLib = getLottieLibrary();
-            let attempts = 0;
-            const maxAttempts = 10;
-            
-            while (!lottieLib && attempts < maxAttempts) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                lottieLib = getLottieLibrary();
-                attempts++;
-            }
-            
-            if (lottieLib) {
-                try {
-                    // Ensure element is in DOM (Lottie requires this)
-                    if (!element.parentNode) {
-                        console.warn('Element not in DOM yet, waiting...');
-                        await new Promise(resolve => {
-                            const checkInterval = setInterval(() => {
-                                if (element.parentNode) {
-                                    clearInterval(checkInterval);
-                                    resolve();
-                                }
-                            }, 50);
-                            // Timeout after 1 second
-                            setTimeout(() => {
-                                clearInterval(checkInterval);
-                                resolve();
-                            }, 1000);
-                        });
-                    }
-                    
-                    // Clear any background styles that might interfere
-                    element.style.backgroundImage = '';
-                    element.style.backgroundSize = '';
-                    element.style.backgroundRepeat = '';
-                    element.style.backgroundPosition = '';
-                    
-                    // Ensure element has proper display and dimensions for Lottie
-                    element.style.display = 'flex';
-                    element.style.alignItems = 'center';
-                    element.style.justifyContent = 'center';
-                    element.style.overflow = 'visible';
-                    
-                    // Ensure dimensions are set
-                    element.style.width = `${size}px`;
-                    element.style.height = `${size}px`;
-                    
-                    console.log('Loading Lottie animation from:', asset.src);
-                    console.log('Element details:', {
-                        inDOM: !!element.parentNode,
-                        display: element.style.display,
-                        width: element.style.width,
-                        height: element.style.height,
-                        opacity: window.getComputedStyle(element).opacity
+    if (isSvg) {
+        // Load SVG inline to allow color manipulation
+        if (asset.randomColor && element.classList.contains('target')) {
+            fetch(asset.src)
+                .then(response => response.text())
+                .then(svgContent => {
+                    element.innerHTML = svgContent;
+                    const svgElement = element.querySelector('svg');
+                    if (!svgElement) return;
+
+                    svgElement.style.width = '100%';
+                    svgElement.style.height = '100%';
+                    svgElement.style.display = 'block';
+
+                    // Apply random color to all path elements
+                    const randomColor = getRandomGemColor();
+                    const paths = svgElement.querySelectorAll('path');
+                    paths.forEach(path => {
+                        path.setAttribute('fill', randomColor);
                     });
-                    
-                    const animation = lottieLib.loadAnimation({
-                        container: element,
-                        renderer: 'svg',
-                        loop: true,
-                        autoplay: true,
-                        path: asset.src
-                    });
-                    
-                    console.log('Lottie animation instance created:', animation);
-                    
-                    // Handle animation events
-                    animation.addEventListener('data_failed', (error) => {
-                        console.error('Lottie animation failed to load:', asset.src, error);
-                    });
-                    
-                    animation.addEventListener('DOMLoaded', () => {
-                        console.log('Lottie animation DOM loaded:', asset.src);
-                        // Mark element as having Lottie rendered
-                        element.setAttribute('lottie-rendered', 'true');
-                        
-                        // Force SVG to fill container
-                        const svg = element.querySelector('svg');
-                        if (svg) {
-                            svg.style.width = '100%';
-                            svg.style.height = '100%';
-                            svg.style.display = 'block';
-                            svg.style.position = 'absolute';
-                            svg.style.top = '0';
-                            svg.style.left = '0';
-                            console.log('SVG styled:', svg);
-                            console.log('SVG dimensions:', {
-                                width: svg.offsetWidth,
-                                height: svg.offsetHeight,
-                                computedWidth: window.getComputedStyle(svg).width,
-                                computedHeight: window.getComputedStyle(svg).height
-                            });
-                        } else {
-                            console.warn('No SVG found in element after DOMLoaded');
-                            console.log('Element HTML:', element.innerHTML.substring(0, 200));
-                        }
-                        
-                        // Debug: Check element visibility
-                        const computedStyle = window.getComputedStyle(element);
-                        console.log('Element computed style:', {
-                            opacity: computedStyle.opacity,
-                            display: computedStyle.display,
-                            visibility: computedStyle.visibility,
-                            width: computedStyle.width,
-                            height: computedStyle.height
-                        });
-                    });
-                    
-                    animation.addEventListener('data_ready', () => {
-                        console.log('Lottie animation data ready:', asset.src);
-                    });
-                    
-                    animation.addEventListener('loaded_images', () => {
-                        console.log('Lottie images loaded:', asset.src);
-                    });
-                    
-                    animation.addEventListener('config_ready', () => {
-                        console.log('Lottie config ready:', asset.src);
-                    });
-                    
-                    // Ensure SVG fills container (with multiple attempts)
-                    const styleSVG = () => {
-                        const svg = element.querySelector('svg');
-                        if (svg) {
-                            svg.style.width = '100%';
-                            svg.style.height = '100%';
-                            svg.style.display = 'block';
-                            svg.style.position = 'absolute';
-                            svg.style.top = '0';
-                            svg.style.left = '0';
-                            console.log('SVG styled successfully');
-                            return true;
-                        }
-                        return false;
+
+                    // Apply color-matched glow to the element
+                    const hexToRgb = (hex) => {
+                        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                        return result ? {
+                            r: parseInt(result[1], 16),
+                            g: parseInt(result[2], 16),
+                            b: parseInt(result[3], 16)
+                        } : null;
                     };
-                    
-                    // Try immediately
-                    if (!styleSVG()) {
-                        // Try after a short delay
-                        setTimeout(() => {
-                            if (!styleSVG()) {
-                                // Try again after DOMLoaded
-                                setTimeout(styleSVG, 200);
-                            }
-                        }, 50);
+                    const rgb = hexToRgb(randomColor);
+                    if (rgb) {
+                        element.style.filter = `drop-shadow(0 0 8px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.9)) drop-shadow(0 0 12px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.6))`;
                     }
-                    
-                    animationInstances.set(element, animation);
-                    
-                    // Observe for visibility optimization
-                    if (visibilityObserver) {
-                        visibilityObserver.observe(element);
-                    }
-                } catch (error) {
-                    console.error('Error loading Lottie animation:', error, asset.src);
-                    console.error('Error details:', error.stack);
-                    // Fallback: show error indicator
-                    element.style.background = 'rgba(255, 0, 0, 0.3)';
-                    element.style.border = '2px solid red';
-                }
-            } else {
-                console.error('Lottie library not available after waiting. Asset:', asset.src);
-                console.error('window.lottie:', window.lottie);
-                console.error('typeof lottie:', typeof lottie);
-                // Fallback: show error indicator
-                element.style.background = 'rgba(255, 0, 0, 0.3)';
-                element.style.border = '2px solid red';
-            }
-            break;
-
-        case 'animated-svg':
-            await loadAnimatedSVG(element, asset);
-            // SVG animations are typically lightweight, no need to pause
-            break;
-
-        case 'sprite':
-            if (!asset.frames) {
-                console.error('Sprite asset missing frames property');
-                return;
-            }
-            // Set up sprite sheet background
-            element.style.backgroundImage = `url(${asset.src})`;
-            element.style.backgroundSize = `${asset.frames * 100}% 100%`;
-            element.style.backgroundRepeat = 'no-repeat';
-            element.style.backgroundPosition = '0 0';
-            
-            // Create and start sprite animation
-            const spriteAnim = new SpriteAnimation(element, asset);
-            spriteAnim.start();
-            animationInstances.set(element, spriteAnim);
-            
-            // Observe for visibility optimization
-            if (visibilityObserver) {
-                visibilityObserver.observe(element);
-            }
-            break;
-
-        case 'svg':
-        case 'image':
-        default:
-            // Static image or SVG
+                })
+                .catch(err => {
+                    console.error('Failed to load SVG for color randomization:', err);
+                    // Fallback to background image
+                    element.style.backgroundImage = `url(${asset.src})`;
+                    element.style.backgroundSize = 'contain';
+                    element.style.backgroundRepeat = 'no-repeat';
+                    element.style.backgroundPosition = 'center';
+                });
+        } else {
+            // Static SVG without color randomization
             element.style.backgroundImage = `url(${asset.src})`;
             element.style.backgroundSize = 'contain';
             element.style.backgroundRepeat = 'no-repeat';
             element.style.backgroundPosition = 'center';
-            break;
+        }
+        return;
     }
+
+    if (isImage) {
+        element.style.backgroundImage = `url(${asset.src})`;
+        element.style.backgroundSize = 'contain';
+        element.style.backgroundRepeat = 'no-repeat';
+        element.style.backgroundPosition = 'center';
+        return;
+    }
+
+    // If the asset isn't a supported format, fail quietly (prevents noisy console logs).
 }
 
 function formatTemplate(text, replacements) {
@@ -797,38 +337,7 @@ function openScoreModal({ title, description }) {
 
 function updateStartScreenCopy(theme) {
     const titleEl = document.getElementById('start-title');
-    const themePromptEl = document.getElementById('theme-prompt');
-    const levelPromptEl = document.getElementById('level-prompt');
     if (titleEl) titleEl.textContent = theme.copy.gameTitle;
-    if (themePromptEl) themePromptEl.textContent = theme.copy.themePrompt;
-    if (levelPromptEl) levelPromptEl.textContent = theme.copy.levelPrompt;
-}
-
-function updateLevelSelectionCopy(themeId) {
-    const theme = getThemeConfig(themeId);
-    document.querySelectorAll('.level-button').forEach(button => {
-        const level = parseInt(button.getAttribute('data-level'), 10);
-        const config = getLevelConfig(level, themeId);
-        const labelEl = button.querySelector('.level-label');
-        const subtextEl = button.querySelector('.level-subtext');
-        if (labelEl) {
-            labelEl.textContent = formatTemplate(theme.copy.levelButtonTemplate, { level });
-        }
-        if (subtextEl) {
-            subtextEl.textContent = formatTemplate(theme.copy.levelButtonSubtext, {
-                hazards: config.hazards,
-                targets: config.targets
-            });
-        }
-    });
-}
-
-function updateLegendLabels(themeId) {
-    const theme = getThemeConfig(themeId);
-    const targetLabel = document.getElementById('target-label');
-    const hazardLabel = document.getElementById('hazard-label');
-    if (targetLabel) targetLabel.textContent = theme.copy.legendTargetLabel;
-    if (hazardLabel) hazardLabel.textContent = theme.copy.legendHazardLabel;
 }
 
 function applyThemeAssetsToUi(level, themeId) {
@@ -842,9 +351,6 @@ function applyThemeAssetsToUi(level, themeId) {
 // Get level configuration - dynamically generated for infinite levels
 function getLevelConfig(level, themeId = currentTheme) {
     const theme = getThemeConfig(themeId);
-    const levelOverride = (theme.levelOverrides && theme.levelOverrides[level]) ? theme.levelOverrides[level] : {};
-    const runtimeOverride = (themeId === currentTheme && activeLevelAssetOverrides) ? activeLevelAssetOverrides : {};
-    const mergedTargetOverride = { ...levelOverride.target, ...runtimeOverride.target };
 
     // Calculate progressive difficulty
     // Hazards: Level 1 has 0, Level 2+ starts at 1 and increases by 1 every level (capped at 8)
@@ -857,9 +363,8 @@ function getLevelConfig(level, themeId = currentTheme) {
         hazards: hazardsCount,
         targets: targetsCount,
         assets: {
-            ...(theme.assets.cursor ? { cursor: resolveAsset(theme.assets.cursor, levelOverride.cursor) } : {}),
-            target: resolveAsset(theme.assets.target, mergedTargetOverride),
-            hazard: resolveAsset(theme.assets.hazard, levelOverride.hazard)
+            target: theme.assets.target,
+            hazard: theme.assets.hazard
         },
         movingHazards: true
     };
@@ -982,6 +487,22 @@ function createTargets() {
 // Helper function to get a random character from a string
 function getRandomCharacter(characters) {
     return characters[Math.floor(Math.random() * characters.length)];
+}
+
+// Helper function to generate random gem colors
+function getRandomGemColor() {
+    const gemColors = [
+        '#FFFFFF', // White
+        '#FFBEE3', // Light Pink
+        '#FCFFBD', // Light Yellow
+        '#F7C0C1', // Peach
+        '#E9F056', // Yellow
+        '#D3B6F0', // Lavender
+        '#BFEC78', // Light Green
+        '#99F8FF', // Light Cyan
+        '#78ECAA', // Mint Green
+    ];
+    return gemColors[Math.floor(Math.random() * gemColors.length)];
 }
 
 // Helper function to initialize dot content based on theme
@@ -1688,7 +1209,8 @@ function checkHazardCollision() {
 // Game over function
 function gameOver() {
     gameStarted = false;
-    document.body.classList.remove('game-started');
+    // Keep game-started class to hide landing elements during modal
+    // document.body.classList.remove('game-started');
     updatePerformanceModeState();
     
     // Reveal all hazards
@@ -1734,8 +1256,12 @@ function gameOver() {
 function levelComplete() {
     levelsCompleted += 1;
     gameStarted = false;
-    document.body.classList.remove('game-started');
+    // Keep game-started class to hide landing elements during modal
+    // document.body.classList.remove('game-started');
     updatePerformanceModeState();
+    
+    // Set background to the start screen gradient when level is complete
+    document.body.style.background = `linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)`;
     
     const theme = getThemeConfig(currentTheme);
     
@@ -1745,10 +1271,9 @@ function levelComplete() {
     
     // Always show next level option - infinite levels!
     levelCompleteScreen.innerHTML = `
-        <h1>${formatTemplate(theme.copy.levelCompleteTitle, { level: currentLevel })}</h1>
+        <h1>Treasure found!</h1>
         <div class="score-actions-row">
             <button id="next-level-button">${theme.copy.nextLevelCta}</button>
-            <button id="finish-run-button">${theme.copy.finishRunCta}</button>
             <button id="restart-button">${theme.copy.restartCta}</button>
         </div>
     `;
@@ -1757,7 +1282,6 @@ function levelComplete() {
     
     // Add next level functionality
     const nextButton = document.getElementById('next-level-button');
-    const finishButton = document.getElementById('finish-run-button');
     const restartButton = document.getElementById('restart-button');
     
     if (nextButton) {
@@ -1774,15 +1298,6 @@ function levelComplete() {
     if (restartButton) {
         restartButton.addEventListener('click', () => {
             location.reload();
-        });
-    }
-
-    if (finishButton) {
-        finishButton.addEventListener('click', () => {
-            openScoreModal({
-                title: 'Save your score',
-                description: `Targets: ${totalTargetsCollected} · Levels: ${levelsCompleted}`
-            });
         });
     }
 }
@@ -1825,8 +1340,6 @@ function startLevel() {
     hasInteracted = false;
     document.body.classList.add('game-started');
     targetsFound = 0;
-    // setActiveLevelAssetOverrides(currentTheme); // Disabled - using single asset, no randomization
-    activeLevelAssetOverrides = null; // Clear any previous overrides
     updatePerformanceModeState();
     
     // Show game UI
@@ -2036,53 +1549,7 @@ function updateStartScreenBackground(theme) {
 }
 
 // Theme selection buttons
-document.querySelectorAll('.theme-button').forEach(button => {
-    button.addEventListener('click', () => {
-        // Remove selected class from all theme buttons
-        document.querySelectorAll('.theme-button').forEach(btn => {
-            btn.classList.remove('selected');
-        });
-        
-        // Add selected class to clicked button
-        button.classList.add('selected');
-        
-        // Set the selected theme
-        currentTheme = button.getAttribute('data-theme');
-        const theme = getThemeConfig(currentTheme);
-
-        // Update color palette
-        baseColor = { ...theme.colors.baseColor };
-        targetColor = { ...theme.colors.targetColor };
-        hazardColor = { ...theme.colors.hazardColor };
-
-        // Update background to match theme
-        updateStartScreenBackground(theme);
-        updateStartScreenCopy(theme);
-        updateLevelSelectionCopy(currentTheme);
-        updateLegendLabels(currentTheme);
-        applyThemeAssetsToUi(currentLevel, currentTheme);
-    });
-});
-
-// Level selection buttons
-document.querySelectorAll('.level-button').forEach(button => {
-    button.addEventListener('click', () => {
-        // Remove selected class from all level buttons
-        document.querySelectorAll('.level-button').forEach(btn => {
-            btn.classList.remove('selected');
-        });
-        
-        // Add selected class to clicked button
-        button.classList.add('selected');
-        
-        const selectedLevel = parseInt(button.getAttribute('data-level'));
-        
-        // Small delay to show selection before starting game
-        setTimeout(() => {
-            startGame(selectedLevel);
-        }, 300);
-    });
-});
+// Removed: theme + level selection UI listeners (those controls are no longer in `index.html`).
 
 // Start button (defaults to classic theme, level 1)
 const startButton = document.getElementById('start-button');
@@ -2123,19 +1590,13 @@ window.addEventListener('resize', () => {
 document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.remove('game-started');
     updatePerformanceModeState();
-    const classicButton = document.querySelector('.theme-button[data-theme="classic"]');
-    if (classicButton) {
-        classicButton.classList.add('selected');
-        const theme = getThemeConfig('classic');
-        baseColor = { ...theme.colors.baseColor };
-        targetColor = { ...theme.colors.targetColor };
-        hazardColor = { ...theme.colors.hazardColor };
-        updateStartScreenBackground(theme);
-        updateStartScreenCopy(theme);
-        updateLevelSelectionCopy('classic');
-        updateLegendLabels('classic');
-        applyThemeAssetsToUi(1, 'classic');
-    }
+    const theme = getThemeConfig('classic');
+    baseColor = { ...theme.colors.baseColor };
+    targetColor = { ...theme.colors.targetColor };
+    hazardColor = { ...theme.colors.hazardColor };
+    updateStartScreenBackground(theme);
+    updateStartScreenCopy(theme);
+    applyThemeAssetsToUi(1, 'classic');
 
     typeTitleText();
     createClassicFloatingShapes();
