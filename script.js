@@ -143,7 +143,8 @@ async function applyAssetToElement(element, asset) {
 
     if (isSvg) {
         // Load SVG inline to allow color manipulation
-        if (asset.randomColor && element.classList.contains('target')) {
+        const isTargetElement = element.classList.contains('target') || element.id === 'target-legend-icon';
+        if (asset.randomColor && isTargetElement) {
             fetch(asset.src)
                 .then(response => response.text())
                 .then(svgContent => {
@@ -249,11 +250,12 @@ function showScoreForm(gameOverScreen) {
     
     // Replace with score form
     gameOverScreen.innerHTML = `
-        <h2>Save Score</h2>
+        <h2 style="color: #F4C2C2;">Save Score</h2>
         <p>Levels: ${levelsCompleted}<br>Targets: ${totalTargetsCollected}</p>
         <form class="score-form">
-            <label class="score-label" for="score-nickname-input">Nickname</label>
+            <label class="score-label" for="score-nickname-input" style="color: white;">Nickname</label>
             <input id="score-nickname-input" class="score-input" type="text" maxlength="20" />
+            <div class="score-error" id="score-error-message"></div>
             <div class="score-actions-row">
                 <button type="submit" class="score-submit">Save</button>
                 <button type="button" class="score-cancel">Cancel</button>
@@ -265,6 +267,14 @@ function showScoreForm(gameOverScreen) {
     const cancelBtn = gameOverScreen.querySelector('.score-cancel');
     const submitBtn = gameOverScreen.querySelector('.score-submit');
     const form = gameOverScreen.querySelector('.score-form');
+    const errorMessage = document.getElementById('score-error-message');
+
+    // Clear error message when user starts typing
+    if (input && errorMessage) {
+        input.addEventListener('input', () => {
+            errorMessage.textContent = '';
+        });
+    }
 
     const restoreGameOver = () => {
         gameOverScreen.innerHTML = originalContent;
@@ -295,17 +305,23 @@ function showScoreForm(gameOverScreen) {
 
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
+        const errorMessage = document.getElementById('score-error-message');
         const nickname = normalizeNickname(input.value || '');
+        
         if (!nickname) {
+            errorMessage.textContent = 'Please add a nickname';
             return;
         }
         if (nickname.length < 2) {
+            errorMessage.textContent = 'Please add a nickname';
             return;
         }
         if (nickname.length > 20) {
+            errorMessage.textContent = 'Nickname is too long';
             return;
         }
 
+        errorMessage.textContent = '';
         submitBtn.disabled = true;
         cancelBtn.disabled = true;
         submitBtn.textContent = 'Saving...';
@@ -315,6 +331,7 @@ function showScoreForm(gameOverScreen) {
             submitBtn.disabled = false;
             cancelBtn.disabled = false;
             submitBtn.textContent = 'Save';
+            errorMessage.textContent = result.error || 'Could not save score';
             return;
         }
 
@@ -337,8 +354,21 @@ function updateStartScreenCopy(theme) {
 
 function applyThemeAssetsToUi(level, themeId) {
     const config = getLevelConfig(level, themeId);
-    applyAssetToElement(document.getElementById('target-legend-icon'), config.assets.target);
-    applyAssetToElement(document.getElementById('hazard-legend-icon'), config.assets.hazard);
+    const targetLegendIcon = document.getElementById('target-legend-icon');
+    const hazardLegendIcon = document.getElementById('hazard-legend-icon');
+    
+    // Apply target asset with random color
+    if (targetLegendIcon && config.assets.target) {
+        const targetAsset = { ...config.assets.target };
+        // Force random color for the legend icon
+        targetAsset.randomColor = true;
+        applyAssetToElement(targetLegendIcon, targetAsset);
+    }
+    
+    // Apply hazard asset
+    if (hazardLegendIcon && config.assets.hazard) {
+        applyAssetToElement(hazardLegendIcon, config.assets.hazard);
+    }
 }
 
 // Get level configuration - dynamically generated for infinite levels
@@ -379,8 +409,8 @@ function createHazards() {
         hazardEl.className = 'hazard';
         applyAssetToElement(hazardEl, hazardAsset);
 
-        // Random position, ensuring spacing from other hazards and cursor
-        let x, y, tooClose, tooCloseToCursor;
+        // Random position, ensuring spacing from other hazards, cursor, and UI elements
+        let x, y, tooClose, tooCloseToCursor, inUIZone;
         do {
             x = Math.random() * (window.innerWidth - hazardSize * 2) + hazardSize;
             y = Math.random() * (window.innerHeight - hazardSize * 2) + hazardSize;
@@ -397,7 +427,10 @@ function createHazards() {
             const dyCursor = y - mouseY;
             const distanceToCursor = Math.sqrt(dxCursor * dxCursor + dyCursor * dyCursor);
             tooCloseToCursor = distanceToCursor < minCursorDistance;
-        } while (tooClose || tooCloseToCursor);
+
+            // Check if in UI zone (bottom 100px of screen to avoid legend and level indicator)
+            inUIZone = y > window.innerHeight - 100;
+        } while (tooClose || tooCloseToCursor || inUIZone);
 
         hazardEl.style.left = `${x - hazardRadius}px`;
         hazardEl.style.top = `${y - hazardRadius}px`;
@@ -405,7 +438,11 @@ function createHazards() {
         document.body.appendChild(hazardEl);
 
         // Random velocity for moving hazards
-        const speed = 0.5; // Slow speed
+        // Base speed is 0.5, but increases by 10% per level after level 2
+        const baseSpeed = 0.5;
+        const speed = currentLevel > 2 
+            ? baseSpeed * Math.pow(1.10, currentLevel - 2) 
+            : baseSpeed;
         const angle = Math.random() * Math.PI * 2;
 
         hazards.push({
@@ -435,8 +472,8 @@ function createTargets() {
         const targetEl = document.createElement('div');
         targetEl.className = 'target';
 
-        // Random position, ensuring spacing from hazards and cursor
-        let x, y, tooCloseToEnemy, tooCloseToCursor;
+        // Random position, ensuring spacing from hazards, cursor, and UI elements
+        let x, y, tooCloseToEnemy, tooCloseToCursor, inUIZone;
         do {
             x = Math.random() * (window.innerWidth - targetSize * 2) + targetSize;
             y = Math.random() * (window.innerHeight - targetSize * 2) + targetSize;
@@ -453,7 +490,10 @@ function createTargets() {
             const dyCursor = y - mouseY;
             const distanceToCursor = Math.sqrt(dxCursor * dxCursor + dyCursor * dyCursor);
             tooCloseToCursor = distanceToCursor < minCursorDistance;
-        } while (tooCloseToEnemy || tooCloseToCursor);
+
+            // Check if in UI zone (bottom 100px of screen to avoid legend and level indicator)
+            inUIZone = y > window.innerHeight - 100;
+        } while (tooCloseToEnemy || tooCloseToCursor || inUIZone);
 
         targetEl.style.left = `${x - targetRadius}px`;
         targetEl.style.top = `${y - targetRadius}px`;
@@ -1143,12 +1183,13 @@ function updateBackground() {
 }
 
 // Show +1 animation
-function showPlusOne(x, y) {
+function showPlusOne(x, y, color = '#FFD700') {
     const plusOne = document.createElement('div');
     plusOne.className = 'plus-one';
     plusOne.textContent = '+1';
     plusOne.style.left = `${x}px`;
     plusOne.style.top = `${y - 30}px`; // Position above the target
+    plusOne.style.color = color;
     
     document.body.appendChild(plusOne);
     
@@ -1183,6 +1224,12 @@ function gameOver() {
     // Reveal all hazards
     hazards.forEach(hazard => {
         hazard.element.classList.add('revealed');
+    });
+    
+    // Reveal all targets (both found and unfound)
+    targets.forEach(target => {
+        target.element.classList.add('revealed');
+        target.revealed = true;
     });
     
     // Create game over screen
@@ -1220,6 +1267,17 @@ function levelComplete() {
     // document.body.classList.remove('game-started');
     updatePerformanceModeState();
     
+    // Reveal all hazards
+    hazards.forEach(hazard => {
+        hazard.element.classList.add('revealed');
+    });
+    
+    // Reveal any unfound targets (should all be found, but just in case)
+    targets.forEach(target => {
+        target.element.classList.add('revealed');
+        target.revealed = true;
+    });
+    
     // Set background to the start screen gradient when level is complete
     document.body.style.background = `linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)`;
     
@@ -1234,7 +1292,6 @@ function levelComplete() {
         <h1>Treasure found</h1>
         <div class="score-actions-row">
             <button id="next-level-button">${theme.copy.nextLevelCta}</button>
-            <button id="restart-button">${theme.copy.restartCta}</button>
         </div>
     `;
     
@@ -1242,7 +1299,6 @@ function levelComplete() {
     
     // Add next level functionality
     const nextButton = document.getElementById('next-level-button');
-    const restartButton = document.getElementById('restart-button');
     
     if (nextButton) {
         nextButton.addEventListener('click', () => {
@@ -1252,12 +1308,6 @@ function levelComplete() {
             gameReady = false; // Reset ready state
             hasInteracted = false; // Reset interaction state
             startLevel();
-        });
-    }
-    
-    if (restartButton) {
-        restartButton.addEventListener('click', () => {
-            location.reload();
         });
     }
 }
@@ -1277,8 +1327,18 @@ function checkTargetReveal() {
             totalTargetsCollected++;
             updateTargetCounter();
 
-            // Show +1 animation above the target
-            showPlusOne(target.x, target.y);
+            // Extract gem color from the SVG path element
+            let gemColor = '#FFD700'; // Default color
+            const svgElement = target.element.querySelector('svg');
+            if (svgElement) {
+                const pathElement = svgElement.querySelector('path');
+                if (pathElement) {
+                    gemColor = pathElement.getAttribute('fill') || '#FFD700';
+                }
+            }
+
+            // Show +1 animation above the target with gem's color
+            showPlusOne(target.x, target.y, gemColor);
 
             // Update background immediately to remove target color from this target
             updateBackground();
@@ -1301,6 +1361,12 @@ function startLevel() {
     document.body.classList.add('game-started');
     targetsFound = 0;
     updatePerformanceModeState();
+    
+    // Reset background to base color at the start of each level
+    const color1 = `rgb(${baseColor.r}, ${baseColor.g}, ${baseColor.b})`;
+    const color2 = `rgb(${Math.max(0, baseColor.r - 20)}, ${Math.max(0, baseColor.g - 20)}, ${Math.max(0, baseColor.b - 20)})`;
+    document.body.style.background = `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`;
+    currentBgColor = { ...baseColor };
     
     // Show game UI
     document.getElementById('game-legend').style.display = 'flex';
@@ -1333,7 +1399,7 @@ function startLevel() {
     
     // Show instruction text based on level
     if (currentLevel === 1) {
-        const message = 'Find the treasure\nIf it\'s <span style="color: #FF5C34;">red</span> the treasure is near';
+        const message = 'Find all the Treasure!\n<span style="color: #FF5C34;">Red</span> = treasure is near';
         typeInstructionText(message, () => {
             // After rules dissolve, show "Start!" then enable game
             showStartMessage(() => {
@@ -1341,7 +1407,7 @@ function startLevel() {
             });
         }, true);
     } else if (currentLevel === 2) {
-        const message = 'Find the treasure\nIf it\'s <span style="color: #FF5C34;">red</span> the treasure is near\nIf it\'s <span style="color: #351E28;">dark</span> there is danger';
+        const message = 'Find all the Treasure!\n<span style="color: #FF5C34;">Red</span> = treasure is near\n<span style="color: #351E28;">Dark</span> = danger is near';
         typeInstructionText(message, () => {
             // After rules dissolve, show "Start!" then enable game
             showStartMessage(() => {

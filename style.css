@@ -462,6 +462,11 @@ body.game-started #classic-shapes-layer {
     color: white;
     z-index: 100;
     pointer-events: none;
+    padding: 8px 12px;
+    background: transparent;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 8px;
 }
 
 #game-legend {
@@ -481,6 +486,11 @@ body.game-started #classic-shapes-layer {
     display: flex;
     align-items: center;
     gap: 5px;
+    padding: 8px 12px;
+    background: transparent;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 8px;
 }
 
 .legend-icon {
@@ -525,6 +535,7 @@ body.game-started #classic-shapes-layer {
     position: absolute;
     font-size: 32px;
     font-weight: bold;
+    font-family: 'Tiny5', 'Arial', sans-serif;
     color: #FFD700;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
     pointer-events: none;
@@ -570,7 +581,8 @@ body.game-started #classic-shapes-layer {
 .score-modal-card {
     border: none;
     box-shadow: none;
-    backdrop-filter: none;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -578,14 +590,18 @@ body.game-started #classic-shapes-layer {
 
 #game-over-screen {
     background: transparent;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 #level-complete-screen {
     background: transparent;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .score-modal-card {
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background: transparent;
 }
 
 #game-over-screen {
