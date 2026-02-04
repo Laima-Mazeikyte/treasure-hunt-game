@@ -250,8 +250,7 @@ function showScoreForm(gameOverScreen) {
     
     // Replace with score form
     gameOverScreen.innerHTML = `
-        <h2 style="color: #F4C2C2;">Save Score</h2>
-        <p>Levels: ${levelsCompleted}<br>Treasures: ${totalTargetsCollected}</p>
+        <p style="font-size: 32px; color: #F4C2C2; margin-bottom: 20px;">Levels: ${levelsCompleted}<br>Treasures: ${totalTargetsCollected}</p>
         <form class="score-form">
             <label class="score-label" for="score-nickname-input" style="color: white;">Nickname</label>
             <input id="score-nickname-input" class="score-input" type="text" maxlength="20" />
@@ -428,8 +427,12 @@ function createHazards() {
             const distanceToCursor = Math.sqrt(dxCursor * dxCursor + dyCursor * dyCursor);
             tooCloseToCursor = distanceToCursor < minCursorDistance;
 
-            // Check if in UI zone (bottom 100px of screen to avoid legend and level indicator)
-            inUIZone = y > window.innerHeight - 100;
+            // Check if in UI zones:
+            // - Top-left corner (level indicator): top 80px, left 200px
+            // - Bottom-left corner (legend): bottom 100px, left 250px
+            const inTopLeftZone = y < 80 && x < 200;
+            const inBottomLeftZone = y > window.innerHeight - 100 && x < 250;
+            inUIZone = inTopLeftZone || inBottomLeftZone;
         } while (tooClose || tooCloseToCursor || inUIZone);
 
         hazardEl.style.left = `${x - hazardRadius}px`;
@@ -491,8 +494,12 @@ function createTargets() {
             const distanceToCursor = Math.sqrt(dxCursor * dxCursor + dyCursor * dyCursor);
             tooCloseToCursor = distanceToCursor < minCursorDistance;
 
-            // Check if in UI zone (bottom 100px of screen to avoid legend and level indicator)
-            inUIZone = y > window.innerHeight - 100;
+            // Check if in UI zones:
+            // - Top-left corner (level indicator): top 80px, left 200px
+            // - Bottom-left corner (legend): bottom 100px, left 250px
+            const inTopLeftZone = y < 80 && x < 200;
+            const inBottomLeftZone = y > window.innerHeight - 100 && x < 250;
+            inUIZone = inTopLeftZone || inBottomLeftZone;
         } while (tooCloseToEnemy || tooCloseToCursor || inUIZone);
 
         targetEl.style.left = `${x - targetRadius}px`;
