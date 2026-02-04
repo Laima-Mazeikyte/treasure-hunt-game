@@ -1099,6 +1099,7 @@ body.leaderboard-page {
 
     .score-modal-overlay {
         padding: 0;
+        background: rgba(0, 0, 0, 0.95);
     }
 
     .score-modal-card {
@@ -1110,6 +1111,9 @@ body.leaderboard-page {
         display: flex;
         flex-direction: column;
         justify-content: center;
+        background: #1e3c72;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
     }
 }
 
