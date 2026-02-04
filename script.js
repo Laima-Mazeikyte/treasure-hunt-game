@@ -251,7 +251,7 @@ function showScoreForm(gameOverScreen) {
     // Replace with score form
     gameOverScreen.innerHTML = `
         <h2 style="color: #F4C2C2;">Save Score</h2>
-        <p>Levels: ${levelsCompleted}<br>Targets: ${totalTargetsCollected}</p>
+        <p>Levels: ${levelsCompleted}<br>Treasures: ${totalTargetsCollected}</p>
         <form class="score-form">
             <label class="score-label" for="score-nickname-input" style="color: white;">Nickname</label>
             <input id="score-nickname-input" class="score-input" type="text" maxlength="20" />

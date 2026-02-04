@@ -586,8 +586,6 @@ body.game-started #classic-shapes-layer {
 .score-modal-card {
     border: none;
     box-shadow: none;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -595,14 +593,10 @@ body.game-started #classic-shapes-layer {
 
 #game-over-screen {
     background: transparent;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
 }
 
 #level-complete-screen {
     background: transparent;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
 }
 
 .score-modal-card {
@@ -683,7 +677,7 @@ body.game-started #classic-shapes-layer {
     color: #FF8A8A;
     font-size: 13px;
     font-family: 'Tiny5', 'Arial', sans-serif;
-    text-align: center;
+    text-align: left;
 }
 
 #restart-button,
@@ -698,13 +692,14 @@ body.game-started #classic-shapes-layer {
     background: none;
     color: #66C2FF;
     border: none;
-    padding: 8px 14px;
+    padding: 8px 0px;
     cursor: pointer;
     font-weight: bold;
     box-shadow: none;
     transition: letter-spacing 0.2s ease, opacity 0.2s ease, text-shadow 0.2s ease, filter 0.2s ease;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
+    width: fit-content;
 }
 
 #restart-button:hover,
@@ -843,11 +838,13 @@ body.game-started #classic-shapes-layer {
 
 .score-actions-row {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: center;
+    gap: 24px;
     margin-top: 10px;
 }
+
 
 .score-modal-overlay {
     position: fixed;
@@ -890,7 +887,7 @@ body.game-started #classic-shapes-layer {
 .score-form {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     text-align: left;
     margin-top: 6px;
 }
@@ -930,18 +927,17 @@ body.game-started #classic-shapes-layer {
     gap: 12px;
 }
 
+.score-actions .score-cancel,
+.score-actions .score-submit {
+    flex: 1;
+}
+
 .score-submit:disabled,
 .score-cancel:disabled,
 #save-score-button:disabled,
 #finish-run-button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-}
-
-.score-cancel,
-.score-submit {
-    /* Remove background overrides to inherit game button styling */
-    background: none !important;
 }
 
 body.leaderboard-page {
@@ -1081,6 +1077,39 @@ body.leaderboard-page {
 
     .leaderboard-title {
         font-size: clamp(32px, 8vw, 48px);
+    }
+
+    /* Full screen modals on mobile */
+    #game-over-screen,
+    #level-complete-screen {
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        transform: none;
+        border-radius: 0;
+        padding: 40px 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .score-modal-overlay {
+        padding: 0;
+    }
+
+    .score-modal-card {
+        max-width: 100%;
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+        padding: 40px 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 }
 
