@@ -4,3 +4,6 @@ dist/
 npm-cache/
 .env
 # Note: docs/ is NOT ignored because it's used for GitHub Pages
+
+# Test environment for style reference (not for production)
+test-environment.html

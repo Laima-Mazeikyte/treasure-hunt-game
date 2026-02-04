@@ -223,6 +223,7 @@ async function submitLeaderboardEntry(nickname) {
         return { ok: false, error: 'Leaderboard is not configured yet.' };
     }
 
+    const entryId = id();
     const payload = {
         nickname,
         totalTargets: totalTargetsCollected,
@@ -232,104 +233,98 @@ async function submitLeaderboardEntry(nickname) {
 
     try {
         await db.transact(
-            db.tx.leaderboard_entries[id()].update(payload)
+            db.tx.leaderboard_entries[entryId].update(payload)
         );
         scoreSubmitted = true;
-        return { ok: true };
+        return { ok: true, entryId };
     } catch (error) {
         return { ok: false, error: 'Could not save score. Please try again.' };
     }
 }
 
-function openScoreModal({ title, description }) {
-    const overlay = document.createElement('div');
-    overlay.className = 'score-modal-overlay';
-    overlay.innerHTML = `
-        <div class="score-modal-card" role="dialog" aria-modal="true">
-            <h2>${title}</h2>
-            <p>${description}</p>
-            <form class="score-form">
-                <label class="score-label" for="score-nickname-input">Nickname</label>
-                <input id="score-nickname-input" class="score-input" type="text" maxlength="20" placeholder="Your name" />
-                <div class="score-error" aria-live="polite"></div>
-                <div class="score-actions">
-                    <button type="button" class="score-cancel">Cancel</button>
-                    <button type="submit" class="score-submit">Save</button>
-                </div>
-            </form>
-        </div>
+function showScoreForm(gameOverScreen) {
+    // Store the original content
+    const originalContent = gameOverScreen.innerHTML;
+    const theme = getThemeConfig(currentTheme);
+    
+    // Replace with score form
+    gameOverScreen.innerHTML = `
+        <h2>Save Score</h2>
+        <p>Levels: ${levelsCompleted}<br>Targets: ${totalTargetsCollected}</p>
+        <form class="score-form">
+            <label class="score-label" for="score-nickname-input">Nickname</label>
+            <input id="score-nickname-input" class="score-input" type="text" maxlength="20" />
+            <div class="score-actions-row">
+                <button type="submit" class="score-submit">Save</button>
+                <button type="button" class="score-cancel">Cancel</button>
+            </div>
+        </form>
     `;
 
-    const input = overlay.querySelector('#score-nickname-input');
-    const errorEl = overlay.querySelector('.score-error');
-    const cancelBtn = overlay.querySelector('.score-cancel');
-    const submitBtn = overlay.querySelector('.score-submit');
-    const form = overlay.querySelector('.score-form');
+    const input = gameOverScreen.querySelector('#score-nickname-input');
+    const cancelBtn = gameOverScreen.querySelector('.score-cancel');
+    const submitBtn = gameOverScreen.querySelector('.score-submit');
+    const form = gameOverScreen.querySelector('.score-form');
 
-    const closeModal = () => {
-        overlay.remove();
-        document.removeEventListener('keydown', onKeyDown);
-    };
-
-    const onKeyDown = (event) => {
-        if (event.key === 'Escape') {
-            closeModal();
+    const restoreGameOver = () => {
+        gameOverScreen.innerHTML = originalContent;
+        // Re-attach event listeners to the restored buttons
+        const restartBtn = gameOverScreen.querySelector('#restart-button');
+        const saveBtn = gameOverScreen.querySelector('#save-score-button');
+        
+        if (restartBtn) {
+            restartBtn.addEventListener('click', () => {
+                location.reload();
+            });
+        }
+        
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                showScoreForm(gameOverScreen);
+            });
         }
     };
 
     if (!hasInstantDb) {
-        errorEl.textContent = 'Leaderboard setup missing. Add your InstantDB app ID first.';
         submitBtn.disabled = true;
     } else if (scoreSubmitted) {
-        errorEl.textContent = 'Score already saved for this run.';
         submitBtn.disabled = true;
     }
 
-    cancelBtn.addEventListener('click', closeModal);
-    overlay.addEventListener('click', (event) => {
-        if (event.target === overlay) {
-            closeModal();
-        }
-    });
+    cancelBtn.addEventListener('click', restoreGameOver);
 
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
         const nickname = normalizeNickname(input.value || '');
         if (!nickname) {
-            errorEl.textContent = 'Please enter a nickname.';
             return;
         }
         if (nickname.length < 2) {
-            errorEl.textContent = 'Nickname must be at least 2 characters.';
             return;
         }
         if (nickname.length > 20) {
-            errorEl.textContent = 'Nickname must be 20 characters or fewer.';
             return;
         }
 
         submitBtn.disabled = true;
         cancelBtn.disabled = true;
         submitBtn.textContent = 'Saving...';
-        errorEl.textContent = '';
 
         const result = await submitLeaderboardEntry(nickname);
         if (!result.ok) {
             submitBtn.disabled = false;
             cancelBtn.disabled = false;
             submitBtn.textContent = 'Save';
-            errorEl.textContent = result.error;
             return;
         }
 
         submitBtn.textContent = 'Saved!';
         setTimeout(() => {
-            window.location.href = 'leaderboard.html';
+            // Pass the entry ID to show personalized ranking
+            window.location.href = `leaderboard.html?entry=${result.entryId}`;
         }, 400);
     });
 
-    document.body.appendChild(overlay);
-    document.addEventListener('keydown', onKeyDown);
     if (input) {
         input.focus();
     }
@@ -344,8 +339,6 @@ function applyThemeAssetsToUi(level, themeId) {
     const config = getLevelConfig(level, themeId);
     applyAssetToElement(document.getElementById('target-legend-icon'), config.assets.target);
     applyAssetToElement(document.getElementById('hazard-legend-icon'), config.assets.hazard);
-    applyAssetToElement(document.getElementById('target-indicator-icon'), config.assets.target);
-    applyAssetToElement(document.getElementById('hazard-indicator-icon'), config.assets.hazard);
 }
 
 // Get level configuration - dynamically generated for infinite levels
@@ -829,33 +822,9 @@ function updateHazardCounter() {
     }
 }
 
-// Update theme icons in legend and indicators
+// Update theme icons in legend
 function updateLegendIcons() {
     applyThemeAssetsToUi(currentLevel, currentTheme);
-}
-
-// Update cursor indicators
-function updateCursorIndicators(targetDistance, hazardDistance) {
-    const cursorIndicators = document.getElementById('cursor-indicators');
-    const targetFill = document.getElementById('target-fill');
-    const hazardFill = document.getElementById('hazard-fill');
-    
-    // Position next to cursor
-    const offset = 25;
-    cursorIndicators.style.left = `${mouseX + offset}px`;
-    cursorIndicators.style.top = `${mouseY}px`;
-    cursorIndicators.style.opacity = '1';
-    
-    // Calculate fill percentages (closer = more filled)
-    // Max distance for full bar effect
-    const maxTargetBar = 400;
-    const maxHazardBar = 300;
-
-    const targetPercent = Math.max(0, Math.min(100, (1 - targetDistance / maxTargetBar) * 100));
-    const hazardPercent = Math.max(0, Math.min(100, (1 - hazardDistance / maxHazardBar) * 100));
-
-    targetFill.style.width = `${targetPercent}%`;
-    hazardFill.style.width = `${hazardPercent}%`;
 }
 
 // Update custom cursor position
@@ -1137,9 +1106,6 @@ function updateBackground() {
         }
     });
 
-    // Update cursor indicators
-    updateCursorIndicators(targetDistance, hazardDistance);
-
     // Start with base color
     let finalColor = { ...baseColor };
     
@@ -1225,11 +1191,6 @@ function gameOver() {
     const theme = getThemeConfig(currentTheme);
     gameOverScreen.innerHTML = `
         <h1>${theme.copy.gameOverTitle}</h1>
-        <p>${theme.copy.gameOverMessage}</p>
-        <p>Level: ${currentLevel}</p>
-        <p>Targets found: ${targetsFound}/${totalTargets}</p>
-        <p>Total targets collected: ${totalTargetsCollected}</p>
-        <p>Levels completed: ${levelsCompleted}</p>
         <div class="score-actions-row">
             <button id="save-score-button">${theme.copy.saveScoreCta}</button>
             <button id="restart-button">${theme.copy.playAgainCta}</button>
@@ -1245,10 +1206,7 @@ function gameOver() {
     const saveButton = document.getElementById('save-score-button');
     if (saveButton) {
         saveButton.addEventListener('click', () => {
-            openScoreModal({
-                title: 'Save your score',
-                description: `Targets: ${totalTargetsCollected} · Levels: ${levelsCompleted}`
-            });
+            showScoreForm(gameOverScreen);
         });
     }
 }
@@ -1273,7 +1231,7 @@ function levelComplete() {
     
     // Always show next level option - infinite levels!
     levelCompleteScreen.innerHTML = `
-        <h1>Treasure found!</h1>
+        <h1>Treasure found</h1>
         <div class="score-actions-row">
             <button id="next-level-button">${theme.copy.nextLevelCta}</button>
             <button id="restart-button">${theme.copy.restartCta}</button>

@@ -15,13 +15,16 @@ const formatDate = (timestamp) => {
   });
 };
 
-const renderRows = (entries) => {
+const renderRows = (entries, userEntryId = null) => {
   rowsEl.innerHTML = "";
-  entries.forEach((entry) => {
+  entries.forEach((entry, index) => {
     const row = document.createElement("div");
-    row.className = "leaderboard-row";
+    const isUserEntry = userEntryId && entry.id === userEntryId;
+    const rank = index + 1;
+    row.className = isUserEntry ? "leaderboard-row user-entry" : "leaderboard-row";
     row.innerHTML = `
-      <span>${entry.nickname || "Anonymous"}</span>
+      <span class="rank-number">#${rank}</span>
+      <span>${entry.nickname || "Anonymous"}${isUserEntry ? ' (You)' : ''}</span>
       <span>${entry.totalTargets ?? 0}</span>
       <span>${entry.levelsCompleted ?? 0}</span>
       <span>${formatDate(entry.createdAt)}</span>
@@ -34,6 +37,10 @@ const renderEmpty = (message) => {
   statusEl.textContent = message;
   tableEl.hidden = true;
 };
+
+// Get user's entry ID from URL if present
+const urlParams = new URLSearchParams(window.location.search);
+const userEntryId = urlParams.get('entry');
 
 if (!hasInstantDb || !ensureInstantDb() || !db) {
   renderEmpty("Leaderboard is not configured yet.");
@@ -60,8 +67,33 @@ if (!hasInstantDb || !ensureInstantDb() || !db) {
 
     const top10 = sorted.slice(0, 10);
 
+    // If user just submitted, find their rank
+    let userRank = null;
+    let userEntry = null;
+    if (userEntryId) {
+      const userIndex = sorted.findIndex(entry => entry.id === userEntryId);
+      if (userIndex !== -1) {
+        userRank = userIndex + 1;
+        userEntry = sorted[userIndex];
+      }
+    }
+
     statusEl.textContent = "";
     tableEl.hidden = false;
-    renderRows(top10);
+    renderRows(top10, userEntryId);
+
+    // Show user's rank if they're outside top 10 (add as last row in table)
+    if (userRank && userRank > 10) {
+      const row = document.createElement("div");
+      row.className = "leaderboard-row user-entry";
+      row.innerHTML = `
+        <span class="rank-number">#${userRank}</span>
+        <span>${userEntry.nickname || "Anonymous"} (You)</span>
+        <span>${userEntry.totalTargets ?? 0}</span>
+        <span>${userEntry.levelsCompleted ?? 0}</span>
+        <span>${formatDate(userEntry.createdAt)}</span>
+      `;
+      rowsEl.appendChild(row);
+    }
   });
 }
