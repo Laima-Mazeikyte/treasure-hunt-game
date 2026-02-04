@@ -58,8 +58,10 @@ if (!hasInstantDb || !ensureInstantDb() || !db) {
       return (b.createdAt || 0) - (a.createdAt || 0);
     });
 
+    const top10 = sorted.slice(0, 10);
+
     statusEl.textContent = "";
     tableEl.hidden = false;
-    renderRows(sorted);
+    renderRows(top10);
   });
 }
