@@ -1209,6 +1209,7 @@ function checkHazardCollision() {
 // Game over function
 function gameOver() {
     gameStarted = false;
+    gameReady = false; // Reset ready state to allow button clicks
     // Keep game-started class to hide landing elements during modal
     // document.body.classList.remove('game-started');
     updatePerformanceModeState();
@@ -1256,6 +1257,7 @@ function gameOver() {
 function levelComplete() {
     levelsCompleted += 1;
     gameStarted = false;
+    gameReady = false; // Reset ready state to allow button clicks
     // Keep game-started class to hide landing elements during modal
     // document.body.classList.remove('game-started');
     updatePerformanceModeState();
