@@ -1,0 +1,6 @@
+import{h as f,e as p,d as l}from"./instantdb-D5dQ5UkJ.js";/* empty css              */const i=document.getElementById("leaderboard-status"),u=document.getElementById("leaderboard-table"),c=document.getElementById("leaderboard-rows"),b=t=>{if(!t)return"--";const e=new Date(t);return Number.isNaN(e.getTime())?"--":e.toLocaleDateString(void 0,{year:"numeric",month:"short",day:"numeric"})},g=t=>{c.innerHTML="",t.forEach(e=>{const r=document.createElement("div");r.className="leaderboard-row",r.innerHTML=`
+      <span>${e.nickname||"Anonymous"}</span>
+      <span>${e.totalTargets??0}</span>
+      <span>${e.levelsCompleted??0}</span>
+      <span>${b(e.createdAt)}</span>
+    `,c.appendChild(r)})},s=t=>{i.textContent=t,u.hidden=!0};!f||!p()||!l?s("Leaderboard is not configured yet."):l.subscribeQuery({leaderboard_entries:{}},t=>{if(t.error){s("Could not load leaderboard.");return}const e=t.data?.leaderboard_entries||[];if(!e.length){s("No scores yet. Be the first!");return}const m=[...e].sort((n,o)=>{const a=(o.totalTargets||0)-(n.totalTargets||0);if(a!==0)return a;const d=(o.levelsCompleted||0)-(n.levelsCompleted||0);return d!==0?d:(o.createdAt||0)-(n.createdAt||0)}).slice(0,10);i.textContent="",u.hidden=!1,g(m)});
