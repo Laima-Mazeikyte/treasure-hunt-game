@@ -1409,6 +1409,10 @@ function startGame(selectedLevel = 1) {
     const startScreen = document.getElementById('start-screen');
     startScreen.style.display = 'none';
     document.body.classList.add('game-started');
+
+    // From this point on we're no longer showing the start screen, so it's safe
+    // to apply the theme background without overriding the CSS start-screen look.
+    updateStartScreenBackground(getThemeConfig(currentTheme));
     
     totalTargetsCollected = 0;
     levelsCompleted = 0;
@@ -1560,7 +1564,6 @@ if (startButton) {
         baseColor = { ...theme.colors.baseColor };
         targetColor = { ...theme.colors.targetColor };
         hazardColor = { ...theme.colors.hazardColor };
-        updateStartScreenBackground(theme);
         startGame(1);
     });
 }
@@ -1594,7 +1597,6 @@ document.addEventListener('DOMContentLoaded', () => {
     baseColor = { ...theme.colors.baseColor };
     targetColor = { ...theme.colors.targetColor };
     hazardColor = { ...theme.colors.hazardColor };
-    updateStartScreenBackground(theme);
     updateStartScreenCopy(theme);
     applyThemeAssetsToUi(1, 'classic');
 
