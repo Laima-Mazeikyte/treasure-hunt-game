@@ -465,8 +465,17 @@ function createTargets() {
     totalTargets = config.targets;
     targets = [];
 
-    // Minimum safe distance from cursor (to prevent instant discovery)
-    const minCursorDistance = 200;
+    // Responsive minimum safe distance from cursor (smaller on mobile)
+    const isMobile = window.innerWidth < 640;
+    const minCursorDistance = isMobile ? 80 : 200;
+    const minHazardDistance = isMobile ? 80 : 150;
+    
+    // Responsive UI zone sizes for mobile
+    const topUIHeight = isMobile ? 60 : 80;
+    const topUIWidth = isMobile ? 120 : 200;
+    const bottomUIHeight = isMobile ? 80 : 100;
+    const bottomUIWidth = isMobile ? 150 : 250;
+    
     const targetAsset = config.assets.target;
     const targetSize = targetAsset.size || 40;
     const targetRadius = targetSize / 2;
@@ -478,6 +487,9 @@ function createTargets() {
         // Random position, ensuring spacing from hazards, cursor, other targets, and UI elements
         const minTargetDistance = 10; // Minimum distance between targets
         let x, y, tooCloseToEnemy, tooCloseToCursor, tooCloseToOtherTarget, inUIZone;
+        let attempts = 0;
+        const maxAttempts = 500; // Prevent infinite loops
+        
         do {
             x = Math.random() * (window.innerWidth - targetSize * 2) + targetSize;
             y = Math.random() * (window.innerHeight - targetSize * 2) + targetSize;
@@ -486,7 +498,7 @@ function createTargets() {
             tooCloseToEnemy = hazards.some(h => {
                 const dx = x - h.x;
                 const dy = y - h.y;
-                return Math.sqrt(dx * dx + dy * dy) < 150;
+                return Math.sqrt(dx * dx + dy * dy) < minHazardDistance;
             });
 
             // Check if too close to other targets
@@ -502,12 +514,17 @@ function createTargets() {
             const distanceToCursor = Math.sqrt(dxCursor * dxCursor + dyCursor * dyCursor);
             tooCloseToCursor = distanceToCursor < minCursorDistance;
 
-            // Check if in UI zones:
-            // - Top-left corner (level indicator): top 80px, left 200px
-            // - Bottom-left corner (legend): bottom 100px, left 250px
-            const inTopLeftZone = y < 80 && x < 200;
-            const inBottomLeftZone = y > window.innerHeight - 100 && x < 250;
+            // Check if in UI zones (responsive sizes)
+            const inTopLeftZone = y < topUIHeight && x < topUIWidth;
+            const inBottomLeftZone = y > window.innerHeight - bottomUIHeight && x < bottomUIWidth;
             inUIZone = inTopLeftZone || inBottomLeftZone;
+            
+            attempts++;
+            // If we've tried too many times, relax constraints slightly to avoid infinite loop
+            if (attempts > maxAttempts) {
+                console.warn(`Could not find valid position for target ${i + 1} after ${maxAttempts} attempts, placing anyway`);
+                break;
+            }
         } while (tooCloseToEnemy || tooCloseToCursor || tooCloseToOtherTarget || inUIZone);
 
         targetEl.style.left = `${x - targetRadius}px`;
