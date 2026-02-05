@@ -608,6 +608,11 @@ body:has(#game-over-screen .score-form) #instruction-overlay {
     display: none !important;
 }
 
+/* Restore system cursor when save score form is active */
+body.game-started:has(#game-over-screen .score-form) {
+    cursor: auto;
+}
+
 /* Make save score screen fully opaque with game over background (all screen sizes) */
 #game-over-screen:has(.score-form) {
     background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
@@ -711,6 +716,8 @@ body:has(#game-over-screen .score-form) #instruction-overlay {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
     width: fit-content;
+    text-align: center;
+    line-height: 1.2;
 }
 
 #restart-button:hover,
@@ -852,7 +859,7 @@ body:has(#game-over-screen .score-form) #instruction-overlay {
     flex-direction: row;
     align-items: stretch;
     justify-content: center;
-    gap: 24px;
+    gap: 48px;
     margin-top: 10px;
 }
 

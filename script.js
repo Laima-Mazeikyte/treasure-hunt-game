@@ -62,8 +62,8 @@ const themes = {
             levelCompleteMessage: 'All targets found!',
             nextLevelCta: 'Next Level',
             restartCta: 'Restart Game',
-            playAgainCta: 'Play Again',
-            saveScoreCta: 'Save Score',
+            playAgainCta: 'Play<br>Again',
+            saveScoreCta: 'Save<br>Score',
             finishRunCta: 'Finish Run'
         },
         levelOverrides: {},
