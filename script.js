@@ -475,8 +475,9 @@ function createTargets() {
         const targetEl = document.createElement('div');
         targetEl.className = 'target';
 
-        // Random position, ensuring spacing from hazards, cursor, and UI elements
-        let x, y, tooCloseToEnemy, tooCloseToCursor, inUIZone;
+        // Random position, ensuring spacing from hazards, cursor, other targets, and UI elements
+        const minTargetDistance = 10; // Minimum distance between targets
+        let x, y, tooCloseToEnemy, tooCloseToCursor, tooCloseToOtherTarget, inUIZone;
         do {
             x = Math.random() * (window.innerWidth - targetSize * 2) + targetSize;
             y = Math.random() * (window.innerHeight - targetSize * 2) + targetSize;
@@ -486,6 +487,13 @@ function createTargets() {
                 const dx = x - h.x;
                 const dy = y - h.y;
                 return Math.sqrt(dx * dx + dy * dy) < 150;
+            });
+
+            // Check if too close to other targets
+            tooCloseToOtherTarget = targets.some(t => {
+                const dx = x - t.x;
+                const dy = y - t.y;
+                return Math.sqrt(dx * dx + dy * dy) < minTargetDistance;
             });
 
             // Check if too close to cursor position
@@ -500,7 +508,7 @@ function createTargets() {
             const inTopLeftZone = y < 80 && x < 200;
             const inBottomLeftZone = y > window.innerHeight - 100 && x < 250;
             inUIZone = inTopLeftZone || inBottomLeftZone;
-        } while (tooCloseToEnemy || tooCloseToCursor || inUIZone);
+        } while (tooCloseToEnemy || tooCloseToCursor || tooCloseToOtherTarget || inUIZone);
 
         targetEl.style.left = `${x - targetRadius}px`;
         targetEl.style.top = `${y - targetRadius}px`;
