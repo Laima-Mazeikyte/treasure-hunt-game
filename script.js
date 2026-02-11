@@ -557,17 +557,30 @@ function getRandomCharacter(characters) {
 // Helper function to generate random gem colors
 function getRandomGemColor() {
     const gemColors = [
-        '#FFFFFF', // White
-        '#FFBEE3', // Light Pink
+        '#F7C0C1', // Light Peach
+        '#FFDDF3', // Light Pink
+        '#FF9BD3', // Pink
         '#FCFFBD', // Light Yellow
-        '#F7C0C1', // Peach
+        '#F7A1A2', // Peach
         '#E9F056', // Yellow
-        '#D3B6F0', // Lavender
-        '#BFEC78', // Light Green
+        '#CA96FF', // Lavender
+        '#DCBAFF', // Lighter Lavender
+        '#B8F05C', // Light Green
         '#99F8FF', // Light Cyan
-        '#78ECAA', // Mint Green
+        '#23F0FF', // Cyan
+        '#6FFFAD', // Mint Green
     ];
     return gemColors[Math.floor(Math.random() * gemColors.length)];
+}
+
+// Convert hex color to { r, g, b } for blending
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
 }
 
 // Helper function to initialize dot content based on theme
@@ -725,6 +738,13 @@ function updateDots() {
     // Determine if in danger zone (using theme-specific dangerZone)
     const inDanger = closestHazardDistance < behavior.dangerZone;
     const dangerIntensity = inDanger ? (1 - closestHazardDistance / behavior.dangerZone) : 0;
+
+    // Closest unrevealed target and its gem color for dot tinting
+    const maxGemDotDistance = maxTargetDistance;
+    const { distance: closestTargetDistance, gemColorRgb } = getClosestTargetWithColor();
+    const gemFactor = closestTargetDistance < maxGemDotDistance && gemColorRgb
+        ? (1 - closestTargetDistance / maxGemDotDistance)
+        : 0;
     
     dots.forEach(dot => {
         const dx = mouseX - dot.originalX;
@@ -753,6 +773,19 @@ function updateDots() {
             // Closer dots are bigger, farther dots shrink toward original size
             scale = 1 + ((1 - clampedDistance / scaleFalloffRadius) * (behavior.maxScale - 1));
         }
+
+        // Blended dot color: base -> gem (if near target) -> hazard (if in danger)
+        let color = getDotBaseColor(theme, currentBgColor);
+        if (gemFactor > 0 && gemColorRgb) {
+            color = interpolateColor(color, gemColorRgb, gemFactor);
+        }
+        if (inDanger) {
+            // Use hazard asset color (red #FF5C34 from hazzard-octopus.svg), not theme hazardColor
+            const hazardAssetColor = hexToRgb('#FF5C34') || { r: 255, g: 92, b: 52 };
+            color = interpolateColor(color, hazardAssetColor, dangerIntensity);
+        }
+        const dotAlpha = inDanger ? 0.6 : 0.5;
+        const dotColorStr = `rgba(${color.r}, ${color.g}, ${color.b}, ${dotAlpha})`;
         
         if (distance < behavior.pushRadius) {
             // Calculate push amount (stronger when closer, theme-specific)
@@ -778,16 +811,10 @@ function updateDots() {
                 
                 dot.element.style.transform = `translate(${pushX}px, ${pushY}px) scale(${scale})`;
                 
-                // Add red tint to dots when in danger (more intense)
-                const redIntensity = Math.floor(dangerIntensity * 220);
-                const dotColor = getDotBaseColor(theme, currentBgColor);
-                const dangerColor = `rgba(${Math.min(255, dotColor.r + 80)}, ${Math.max(0, dotColor.g - redIntensity)}, ${Math.max(0, dotColor.b - redIntensity)}, 0.6)`;
-                
-                // Apply color based on dot type
                 if (dot.element.classList.contains('dot-text')) {
-                    dot.element.style.color = dangerColor;
+                    dot.element.style.color = dotColorStr;
                 } else {
-                    dot.element.style.backgroundColor = dangerColor;
+                    dot.element.style.backgroundColor = dotColorStr;
                 }
             } else {
                 // Normal push behavior
@@ -798,31 +825,25 @@ function updateDots() {
                 const pushX = -Math.cos(angle) * pushStrength + baseJitterX;
                 const pushY = -Math.sin(angle) * pushStrength + baseJitterY;
                 
-                const dotColor = getDotBaseColor(theme, currentBgColor);
-                const normalColor = `rgba(${dotColor.r}, ${dotColor.g}, ${dotColor.b}, 0.5)`;
                 dot.element.style.transform = `translate(${pushX}px, ${pushY}px) scale(${scale})`;
                 
-                // Apply color based on dot type
                 if (dot.element.classList.contains('dot-text')) {
-                    dot.element.style.color = normalColor;
+                    dot.element.style.color = dotColorStr;
                 } else {
-                    dot.element.style.backgroundColor = normalColor;
+                    dot.element.style.backgroundColor = dotColorStr;
                 }
             }
         } else {
             // Return to original position with scale
-            const dotColor = getDotBaseColor(theme, currentBgColor);
-            const normalColor = `rgba(${dotColor.r}, ${dotColor.g}, ${dotColor.b}, 0.5)`;
             const baseJitter = inDanger ? (behavior.baseJitterAmount || 0) : 0;
             const baseJitterX = (Math.random() - 0.5) * baseJitter;
             const baseJitterY = (Math.random() - 0.5) * baseJitter;
             dot.element.style.transform = `translate(${baseJitterX}px, ${baseJitterY}px) scale(${scale})`;
             
-            // Apply color based on dot type
             if (dot.element.classList.contains('dot-text')) {
-                dot.element.style.color = normalColor;
+                dot.element.style.color = dotColorStr;
             } else {
-                dot.element.style.backgroundColor = normalColor;
+                dot.element.style.backgroundColor = dotColorStr;
             }
         }
     });
@@ -833,18 +854,16 @@ function updateDots() {
     requestAnimationFrame(updateDots);
 }
 
-// Find closest unrevealed target
-function getClosestTargetDistance() {
+// Find closest unrevealed target and its gem color (for dot tinting)
+function getClosestTargetWithColor() {
     let minDistance = Infinity;
     let closestTarget = null;
 
     targets.forEach(target => {
-        // Only consider unrevealed targets that haven't been hovered yet
         if (!target.revealed && !target.hasBeenHovered) {
             const dx = mouseX - target.x;
             const dy = mouseY - target.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
-
             if (distance < minDistance) {
                 minDistance = distance;
                 closestTarget = target;
@@ -858,12 +877,27 @@ function getClosestTargetDistance() {
             currentHoveredTarget = closestTarget;
         }
     } else if (currentHoveredTarget && minDistance >= 50) {
-        // Mark target as hovered when player moves away
         currentHoveredTarget.hasBeenHovered = true;
         currentHoveredTarget = null;
     }
 
-    return minDistance;
+    let gemColorRgb = null;
+    if (closestTarget) {
+        const pathEl = closestTarget.element.querySelector('svg path');
+        const fill = pathEl ? pathEl.getAttribute('fill') : null;
+        gemColorRgb = fill ? hexToRgb(fill) : null;
+        if (!gemColorRgb) {
+            const theme = getThemeConfig(currentTheme);
+            gemColorRgb = { ...theme.colors.targetColor };
+        }
+    }
+
+    return { distance: minDistance, target: closestTarget, gemColorRgb };
+}
+
+// Find closest unrevealed target (returns distance only; uses getClosestTargetWithColor for single source of truth)
+function getClosestTargetDistance() {
+    return getClosestTargetWithColor().distance;
 }
 
 // Interpolate between colors
@@ -970,35 +1004,37 @@ function typeInstructionText(text, callback, isHTML = false) {
         tempDiv.innerHTML = text;
         const fullHTML = text;
         
-        // Create a temporary element to parse the HTML structure
         let visibleText = '';
         let htmlBuffer = '';
-        let insideTag = false;
         let index = 0;
         
         const typeNext = () => {
             if (index < fullHTML.length) {
                 const char = fullHTML[index];
-                
+                let delay = 25;
+
                 if (char === '<') {
-                    insideTag = true;
-                    htmlBuffer = '<';
-                } else if (char === '>' && insideTag) {
-                    htmlBuffer += '>';
-                    visibleText += htmlBuffer;
+                    // Consume entire tag at once so it doesn't add a pause per tag character
                     htmlBuffer = '';
-                    insideTag = false;
-                } else if (insideTag) {
-                    htmlBuffer += char;
+                    while (index < fullHTML.length) {
+                        const tagChar = fullHTML[index];
+                        htmlBuffer += tagChar;
+                        index++;
+                        if (tagChar === '>') break;
+                    }
+                    visibleText += htmlBuffer;
+                    instructionEl.innerHTML = visibleText;
                 } else {
                     visibleText += char;
+                    instructionEl.innerHTML = visibleText;
+                    index++;
+                    // Pause a bit after a newline so there's a delay between lines
+                    if (char === '\n') delay = 500;
                 }
-                
-                instructionEl.innerHTML = visibleText;
-                index++;
-                setTimeout(typeNext, 25);
+
+                setTimeout(typeNext, delay);
             } else {
-                // After typing is complete, immediately start dissolve
+                // After typing is complete, keep instructions visible for 1 second, then dissolve
                 setTimeout(() => {
                     overlayEl.classList.add('dissolving');
                     setTimeout(() => {
@@ -1007,7 +1043,7 @@ function typeInstructionText(text, callback, isHTML = false) {
                             callback();
                         }
                     }, 1000);
-                }, 100); // Small delay after typing completes
+                }, 1000); // Hold full instructions for 1 second before dissolve
             }
         };
         
@@ -1023,7 +1059,7 @@ function typeInstructionText(text, callback, isHTML = false) {
                 index += 1;
                 setTimeout(typeNext, 25);
             } else {
-                // After typing is complete, immediately start dissolve
+                // After typing is complete, keep instructions visible for 1 second, then dissolve
                 setTimeout(() => {
                     overlayEl.classList.add('dissolving');
                     // After dissolve animation completes, call callback
@@ -1033,7 +1069,7 @@ function typeInstructionText(text, callback, isHTML = false) {
                             callback();
                         }
                     }, 1000); // Match the CSS transition duration
-                }, 100); // Small delay after typing completes
+                }, 1000); // Hold full instructions for 1 second before dissolve
             }
         };
 
@@ -1438,7 +1474,7 @@ function startLevel() {
     if (currentLevel === 1) {
         // Hide cursor during instructions for level 1
         document.body.classList.add('instructions-active');
-        const message = 'Find all the Treasure!\n<span style="color: #FF5C34;">Red</span> = treasure is near';
+        const message = 'Find the treasure';
         typeInstructionText(message, () => {
             // After rules dissolve, show "Start!" then enable game
             showStartMessage(() => {
@@ -1449,7 +1485,7 @@ function startLevel() {
     } else if (currentLevel === 2) {
         // Hide cursor during instructions for level 2
         document.body.classList.add('instructions-active');
-        const message = 'Find all the Treasure!\n<span style="color: #FF5C34;">Red</span> = treasure is near\n<span style="color: #351E28;">Dark</span> = danger is near';
+        const message = 'Find the treasure\nBe wary of <span class="instruction-jiggle" style="color: #351E28;">shadows</span>';
         typeInstructionText(message, () => {
             // After rules dissolve, show "Start!" then enable game
             showStartMessage(() => {
