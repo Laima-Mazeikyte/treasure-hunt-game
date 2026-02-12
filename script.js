@@ -559,11 +559,9 @@ function getRandomGemColor() {
     const gemColors = [
         '#F7C0C1', // Light Peach
         '#FFDDF3', // Light Pink
-        '#FF9BD3', // Pink
         '#FCFFBD', // Light Yellow
         '#F7A1A2', // Peach
         '#E9F056', // Yellow
-        '#CA96FF', // Lavender
         '#DCBAFF', // Lighter Lavender
         '#B8F05C', // Light Green
         '#99F8FF', // Light Cyan
